@@ -373,6 +373,41 @@
   onAuthStateChanged(auth, user => {
     if (window._onAuthChange) window._onAuthChange(user);
   });
+
+  // Attach forgot password button listener diretamente no módulo (100% confiável)
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnForgot = document.getElementById('btn-forgot-senha');
+    if (btnForgot) {
+      btnForgot.addEventListener('click', async () => {
+        const email = document.getElementById('login-email').value.trim();
+        const errEl = document.getElementById('login-error');
+        const okEl  = document.getElementById('login-success');
+        errEl.textContent = ''; okEl.textContent = '';
+        if (!email) {
+          errEl.textContent = 'Digite seu e-mail acima primeiro.';
+          const emailInput = document.getElementById('login-email');
+          emailInput.style.borderColor = '#ef4444';
+          emailInput.focus();
+          setTimeout(() => emailInput.style.borderColor = '', 2500);
+          return;
+        }
+        okEl.textContent = '⏳ Enviando...';
+        try {
+          await sendPasswordResetEmail(auth, email);
+          okEl.textContent = '✅ E-mail enviado! Verifique sua caixa de entrada e o spam.';
+          errEl.textContent = '';
+        } catch(e) {
+          okEl.textContent = '';
+          const msgs = {
+            'auth/user-not-found': 'Nenhuma conta com esse e-mail.',
+            'auth/invalid-email': 'E-mail inválido.',
+            'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.',
+          };
+          errEl.textContent = msgs[e.code] || 'Erro ao enviar. Tente novamente.';
+        }
+      });
+    }
+  });
 </script>
 
 </head>
@@ -400,12 +435,12 @@
     <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
       onkeydown="if(event.key==='Enter') window._doLogin()">
     <div class="login-forgot" id="login-forgot-wrap">
-      <span onclick="window._doResetPassword()" style="
-        display:inline-block; padding:6px 0;
+      <button id="btn-forgot-senha" type="button" style="
+        background:none; border:none; padding:8px 0;
         color:#60a5fa; font-weight:700; font-size:0.82rem;
         cursor:pointer; text-decoration:underline;
-        -webkit-tap-highlight-color: rgba(96,165,250,0.2);
-      ">🔑 Esqueci minha senha</span>
+        font-family:'Nunito',sans-serif; width:100%; text-align:right;
+      ">🔑 Esqueci minha senha</button>
     </div>
     <div class="login-label" id="login-confirm-label" style="display:none">Confirmar Senha</div>
     <input class="login-input" type="password" id="login-pass2" placeholder="••••••••" style="display:none"
