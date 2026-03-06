@@ -343,7 +343,12 @@
     <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
       onkeydown="if(event.key==='Enter') window._doLogin()">
     <div class="login-forgot" id="login-forgot-wrap">
-      <span onclick="window._doResetPassword()">Esqueci a senha</span>
+      <span onclick="window._doResetPassword()" style="
+        display:inline-block; padding:6px 0;
+        color:#60a5fa; font-weight:700; font-size:0.82rem;
+        cursor:pointer; text-decoration:underline;
+        -webkit-tap-highlight-color: rgba(96,165,250,0.2);
+      ">🔑 Esqueci minha senha</span>
     </div>
     <div class="login-label" id="login-confirm-label" style="display:none">Confirmar Senha</div>
     <input class="login-input" type="password" id="login-pass2" placeholder="••••••••" style="display:none"
@@ -939,11 +944,34 @@ window._doResetPassword = async function() {
   const errEl = document.getElementById('login-error');
   const okEl  = document.getElementById('login-success');
   errEl.textContent = ''; okEl.textContent = '';
-  if (!email) { errEl.textContent = 'Digite seu e-mail acima primeiro.'; return; }
+
+  if (!email) {
+    errEl.textContent = 'Digite seu e-mail acima primeiro.';
+    // Destaca o campo de e-mail
+    const emailInput = document.getElementById('login-email');
+    emailInput.style.borderColor = 'var(--red)';
+    emailInput.focus();
+    setTimeout(() => emailInput.style.borderColor = '', 2000);
+    return;
+  }
+
+  // Verifica se Firebase já carregou
+  if (!window._fbResetPassword || !window._fbAuth) {
+    errEl.textContent = 'Aguarde um momento e tente novamente.';
+    return;
+  }
+
+  // Feedback visual imediato
+  okEl.textContent = '⏳ Enviando...';
+
   try {
     await window._fbResetPassword(window._fbAuth, email);
-    okEl.textContent = '✅ E-mail de redefinição enviado! Verifique sua caixa de entrada.';
-  } catch(e) { errEl.textContent = _firebaseError(e.code); }
+    okEl.textContent = '✅ E-mail enviado! Verifique sua caixa de entrada (e o spam).';
+    errEl.textContent = '';
+  } catch(e) {
+    okEl.textContent = '';
+    errEl.textContent = _firebaseError(e.code);
+  }
 };
 
 window._doLogout = async function() {
