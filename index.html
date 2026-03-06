@@ -310,23 +310,65 @@
   // ── Todas as ações de auth ficam DENTRO do módulo para garantir acesso ──
 
   window._doLogin = async function() {
-    const email = document.getElementById('login-email').value.trim();
-    const pass  = document.getElementById('login-pass').value;
-    const pass2 = document.getElementById('login-pass2').value;
-    const errEl = document.getElementById('login-error');
-    const okEl  = document.getElementById('login-success');
+    const email  = document.getElementById('login-email').value.trim();
+    const pass   = document.getElementById('login-pass').value;
+    const pass2  = document.getElementById('login-pass2').value;
+    const errEl  = document.getElementById('login-error');
+    const okEl   = document.getElementById('login-success');
+    const btnEl  = document.querySelector('.login-btn');
     errEl.textContent = ''; okEl.textContent = '';
-    if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+
+    // Validações básicas
+    if (!email) { errEl.textContent = '❌ Digite seu e-mail.'; document.getElementById('login-email').focus(); return; }
+    if (!pass)  { errEl.textContent = '❌ Digite sua senha.';  document.getElementById('login-pass').focus();  return; }
+
+    // Loading no botão
+    const btnOriginal = btnEl.textContent;
+    btnEl.textContent = '⏳ Aguarde...';
+    btnEl.disabled = true;
+
     if (window._loginMode === 'register') {
-      if (pass !== pass2) { errEl.textContent = 'As senhas não conferem.'; return; }
-      if (pass.length < 6) { errEl.textContent = 'A senha precisa ter ao menos 6 caracteres.'; return; }
+      if (pass !== pass2) {
+        errEl.textContent = '❌ As senhas não conferem.';
+        btnEl.textContent = btnOriginal; btnEl.disabled = false; return;
+      }
+      if (pass.length < 6) {
+        errEl.textContent = '❌ A senha precisa ter ao menos 6 caracteres.';
+        btnEl.textContent = btnOriginal; btnEl.disabled = false; return;
+      }
       try {
         await createUserWithEmailAndPassword(auth, email, pass);
-      } catch(e) { errEl.textContent = window._firebaseError(e.code); }
+      } catch(e) {
+        errEl.textContent = window._firebaseError(e.code);
+        btnEl.textContent = btnOriginal; btnEl.disabled = false;
+      }
     } else {
       try {
         await signInWithEmailAndPassword(auth, email, pass);
-      } catch(e) { errEl.textContent = window._firebaseError(e.code); }
+        // sucesso — onAuthStateChanged vai cuidar do resto
+      } catch(e) {
+        const code = e.code;
+        // Mensagens bem específicas para cada erro
+        if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+          errEl.textContent = '❌ Senha incorreta. Verifique e tente novamente.';
+          // Destaca campo de senha
+          const passInput = document.getElementById('login-pass');
+          passInput.style.borderColor = '#ef4444';
+          passInput.select();
+          setTimeout(() => passInput.style.borderColor = '', 3000);
+        } else if (code === 'auth/user-not-found') {
+          errEl.textContent = '❌ Nenhuma conta com esse e-mail.';
+          document.getElementById('login-email').style.borderColor = '#ef4444';
+          setTimeout(() => document.getElementById('login-email').style.borderColor = '', 3000);
+        } else if (code === 'auth/invalid-email') {
+          errEl.textContent = '❌ E-mail inválido.';
+        } else if (code === 'auth/too-many-requests') {
+          errEl.textContent = '⚠️ Muitas tentativas. Aguarde alguns minutos ou redefina sua senha.';
+        } else {
+          errEl.textContent = window._firebaseError(code);
+        }
+        btnEl.textContent = btnOriginal; btnEl.disabled = false;
+      }
     }
   };
 
@@ -449,7 +491,12 @@
     <div class="login-error" id="login-error"></div>
     <div class="login-success" id="login-success"></div>
     <div class="login-toggle">
-      <span id="login-toggle-link" onclick="window._toggleLoginMode()">Não tem conta? Cadastrar</span>
+      <button id="login-toggle-link" type="button" onclick="window._toggleLoginMode()" style="
+        background:none; border:none; padding:8px;
+        color:var(--green); font-weight:700; font-size:0.85rem;
+        cursor:pointer; font-family:'Nunito',sans-serif;
+        text-decoration:underline;
+      ">Não tem conta? Cadastrar</button>
     </div>
   </div>
 </div>
@@ -976,6 +1023,28 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Service Worker (PWA offline support) ──────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    var swCode = [
+      "self.addEventListener('install', function(e){ self.skipWaiting(); });",
+      "self.addEventListener('activate', function(e){ clients.claim(); });",
+      "self.addEventListener('fetch', function(e){",
+      "  if(e.request.method!=='GET') return;",
+      "  e.respondWith(caches.open('pelada-kf-v1').then(function(cache){",
+      "    return fetch(e.request).then(function(res){ cache.put(e.request,res.clone()); return res; })",
+      "      .catch(function(){ return caches.match(e.request); });",
+      "  }));",
+      "});"
+    ].join('\n');
+    var blob = new Blob([swCode], {type: 'application/javascript'});
+    var swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl);
+  });
+}
+</script>
+
+<script>
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let players = [];
 let selectedNivel = 3;
@@ -983,8 +1052,6 @@ const STORAGE_KEY = 'pelada_kf_players';
 let _currentUid = null;
 
 // ─── LOGIN / AUTH UI ───────────────────────────────────────────────────────
-let _loginMode = 'login'; // 'login' | 'register'
-
 window._loginMode = 'login';
 
 window._toggleLoginMode = function() {
@@ -995,27 +1062,32 @@ window._toggleLoginMode = function() {
   const confirmLabel = document.getElementById('login-confirm-label');
   const confirmInput = document.getElementById('login-pass2');
   const forgotWrap   = document.getElementById('login-forgot-wrap');
-  confirmLabel.style.display = mode === 'register' ? '' : 'none';
-  confirmInput.style.display = mode === 'register' ? '' : 'none';
-  if (forgotWrap) forgotWrap.style.display = mode === 'register' ? 'none' : '';
-  document.querySelector('.login-btn').textContent = mode === 'login' ? 'ENTRAR' : 'CADASTRAR';
-  document.getElementById('login-error').textContent = '';
+  if (confirmLabel) confirmLabel.style.display = mode === 'register' ? '' : 'none';
+  if (confirmInput) confirmInput.style.display = mode === 'register' ? '' : 'none';
+  if (forgotWrap)   forgotWrap.style.display   = mode === 'register' ? 'none' : '';
+  const loginBtn = document.querySelector('.login-btn');
+  if (loginBtn) { loginBtn.textContent = mode === 'login' ? 'ENTRAR' : 'CADASTRAR'; loginBtn.disabled = false; }
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value  = '';
+  if (confirmInput) confirmInput.value = '';
+  document.getElementById('login-error').textContent   = '';
   document.getElementById('login-success').textContent = '';
 };
 
 window._firebaseError = function(code) {
   const map = {
-    'auth/user-not-found': 'Usuário não encontrado.',
-    'auth/wrong-password': 'Senha incorreta.',
-    'auth/invalid-email': 'E-mail inválido.',
-    'auth/email-already-in-use': 'E-mail já cadastrado.',
-    'auth/weak-password': 'Senha fraca (mínimo 6 caracteres).',
-    'auth/invalid-credential': 'E-mail ou senha incorretos.',
-    'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
-    'auth/network-request-failed': 'Sem conexão com a internet.',
-    'auth/popup-blocked': 'Popup bloqueado. Permita popups para este site.',
+    'auth/user-not-found':        '❌ Nenhuma conta com esse e-mail.',
+    'auth/wrong-password':        '❌ Senha incorreta. Verifique e tente novamente.',
+    'auth/invalid-email':         '❌ E-mail inválido.',
+    'auth/email-already-in-use':  '❌ Esse e-mail já tem uma conta. Tente entrar.',
+    'auth/weak-password':         '❌ Senha fraca. Use ao menos 6 caracteres.',
+    'auth/invalid-credential':    '❌ Senha incorreta. Verifique e tente novamente.',
+    'auth/too-many-requests':     '⚠️ Muitas tentativas. Aguarde ou redefina sua senha.',
+    'auth/network-request-failed':'⚠️ Sem conexão com a internet.',
+    'auth/popup-blocked':         '⚠️ Popup bloqueado. Permita popups para este site.',
+    'auth/requires-recent-login': '⚠️ Faça login novamente para continuar.',
   };
-  return map[code] || 'Erro: ' + code;
+  return map[code] || '❌ Erro inesperado. Tente novamente.';
 };
 
 // ─── NOME DA PELADA ────────────────────────────────────────────────────────
@@ -2331,28 +2403,6 @@ function imprimirRelatorioMensalidades() {
 
   <div class="footer">Controle de Pelada KF · ${nomeMes} ${ano} · Relatório de Mensalidades</div>
   
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Inline service worker via blob
-    const swCode = `
-self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => clients.claim());
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.open('pelada-kf-v1').then(cache =>
-      fetch(e.request).then(res => { cache.put(e.request, res.clone()); return res; })
-        .catch(() => caches.match(e.request))
-    )
-  );
-});`;
-    const blob = new Blob([swCode], {type: 'application/javascript'});
-    const swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl);
-  });
-}
-</script>
 </body></html>`);
   win.document.close();
   win.print();
