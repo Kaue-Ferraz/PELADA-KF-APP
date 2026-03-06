@@ -297,23 +297,80 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
 
-  // Expõe para o código legado
-  window._fbAuth = auth;
-  window._fbDb   = db;
-  window._fbDoc  = doc;
-  window._fbGetDoc  = getDoc;
-  window._fbSetDoc  = setDoc;
-  window._fbSignIn        = signInWithEmailAndPassword;
-  window._fbSignUp        = createUserWithEmailAndPassword;
-  window._fbSignOut       = signOut;
-  window._fbOnAuth        = onAuthStateChanged;
-  window._fbGoogleProvider = new GoogleAuthProvider();
-  window._fbGoogleSignIn  = signInWithPopup;
-  window._fbResetPassword = sendPasswordResetEmail;
+  // Expõe storage functions para o código legado
+  window._fbAuth      = auth;
+  window._fbDb        = db;
+  window._fbDoc       = doc;
+  window._fbGetDoc    = getDoc;
+  window._fbSetDoc    = setDoc;
+  window._fbSignOut   = signOut;
 
-  // Inicia escuta de autenticação assim que o módulo carrega
-  window._fbOnAuth(auth, user => {
+  // ── Todas as ações de auth ficam DENTRO do módulo para garantir acesso ──
+
+  window._doLogin = async function() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    const pass2 = document.getElementById('login-pass2').value;
+    const errEl = document.getElementById('login-error');
+    const okEl  = document.getElementById('login-success');
+    errEl.textContent = ''; okEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+    if (window._loginMode === 'register') {
+      if (pass !== pass2) { errEl.textContent = 'As senhas não conferem.'; return; }
+      if (pass.length < 6) { errEl.textContent = 'A senha precisa ter ao menos 6 caracteres.'; return; }
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+      } catch(e) { errEl.textContent = window._firebaseError(e.code); }
+    } else {
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch(e) { errEl.textContent = window._firebaseError(e.code); }
+    }
+  };
+
+  window._doGoogleLogin = async function() {
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch(e) {
+      if (e.code !== 'auth/popup-closed-by-user') errEl.textContent = window._firebaseError(e.code);
+    }
+  };
+
+  window._doResetPassword = async function() {
+    const email = document.getElementById('login-email').value.trim();
+    const errEl = document.getElementById('login-error');
+    const okEl  = document.getElementById('login-success');
+    errEl.textContent = ''; okEl.textContent = '';
+    if (!email) {
+      errEl.textContent = 'Digite seu e-mail acima primeiro.';
+      const emailInput = document.getElementById('login-email');
+      emailInput.style.borderColor = 'var(--red)';
+      emailInput.focus();
+      setTimeout(() => emailInput.style.borderColor = '', 2500);
+      return;
+    }
+    okEl.textContent = '⏳ Enviando...';
+    try {
+      await sendPasswordResetEmail(auth, email);
+      okEl.textContent = '✅ E-mail enviado! Verifique sua caixa de entrada e o spam.';
+      errEl.textContent = '';
+    } catch(e) {
+      okEl.textContent = '';
+      errEl.textContent = window._firebaseError(e.code);
+    }
+  };
+
+  window._doLogout = async function() {
+    if (!confirm('Sair da conta?')) return;
+    await signOut(auth);
+  };
+
+  // Escuta mudança de autenticação
+  onAuthStateChanged(auth, user => {
     if (window._onAuthChange) window._onAuthChange(user);
   });
 </script>
@@ -893,93 +950,25 @@ let _currentUid = null;
 // ─── LOGIN / AUTH UI ───────────────────────────────────────────────────────
 let _loginMode = 'login'; // 'login' | 'register'
 
+window._loginMode = 'login';
+
 window._toggleLoginMode = function() {
-  _loginMode = _loginMode === 'login' ? 'register' : 'login';
-  document.getElementById('login-mode-title').textContent  = _loginMode === 'login' ? 'ENTRAR' : 'CRIAR CONTA';
-  document.getElementById('login-toggle-link').textContent = _loginMode === 'login' ? 'Não tem conta? Cadastrar' : 'Já tem conta? Entrar';
+  window._loginMode = window._loginMode === 'login' ? 'register' : 'login';
+  const mode = window._loginMode;
+  document.getElementById('login-mode-title').textContent  = mode === 'login' ? 'ENTRAR' : 'CRIAR CONTA';
+  document.getElementById('login-toggle-link').textContent = mode === 'login' ? 'Não tem conta? Cadastrar' : 'Já tem conta? Entrar';
   const confirmLabel = document.getElementById('login-confirm-label');
   const confirmInput = document.getElementById('login-pass2');
   const forgotWrap   = document.getElementById('login-forgot-wrap');
-  confirmLabel.style.display = _loginMode === 'register' ? '' : 'none';
-  confirmInput.style.display = _loginMode === 'register' ? '' : 'none';
-  if (forgotWrap) forgotWrap.style.display = _loginMode === 'register' ? 'none' : '';
-  document.querySelector('.login-btn').textContent = _loginMode === 'login' ? 'ENTRAR' : 'CADASTRAR';
+  confirmLabel.style.display = mode === 'register' ? '' : 'none';
+  confirmInput.style.display = mode === 'register' ? '' : 'none';
+  if (forgotWrap) forgotWrap.style.display = mode === 'register' ? 'none' : '';
+  document.querySelector('.login-btn').textContent = mode === 'login' ? 'ENTRAR' : 'CADASTRAR';
   document.getElementById('login-error').textContent = '';
   document.getElementById('login-success').textContent = '';
 };
 
-window._doLogin = async function() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-pass').value;
-  const pass2 = document.getElementById('login-pass2').value;
-  const errEl = document.getElementById('login-error');
-  const okEl  = document.getElementById('login-success');
-  errEl.textContent = ''; okEl.textContent = '';
-  if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
-  if (_loginMode === 'register') {
-    if (pass !== pass2) { errEl.textContent = 'As senhas não conferem.'; return; }
-    if (pass.length < 6) { errEl.textContent = 'A senha precisa ter ao menos 6 caracteres.'; return; }
-    try {
-      await window._fbSignUp(window._fbAuth, email, pass);
-    } catch(e) { errEl.textContent = _firebaseError(e.code); }
-  } else {
-    try {
-      await window._fbSignIn(window._fbAuth, email, pass);
-    } catch(e) { errEl.textContent = _firebaseError(e.code); }
-  }
-};
-
-window._doGoogleLogin = async function() {
-  const errEl = document.getElementById('login-error');
-  errEl.textContent = '';
-  try {
-    await window._fbGoogleSignIn(window._fbAuth, window._fbGoogleProvider);
-  } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') errEl.textContent = _firebaseError(e.code);
-  }
-};
-
-window._doResetPassword = async function() {
-  const email = document.getElementById('login-email').value.trim();
-  const errEl = document.getElementById('login-error');
-  const okEl  = document.getElementById('login-success');
-  errEl.textContent = ''; okEl.textContent = '';
-
-  if (!email) {
-    errEl.textContent = 'Digite seu e-mail acima primeiro.';
-    // Destaca o campo de e-mail
-    const emailInput = document.getElementById('login-email');
-    emailInput.style.borderColor = 'var(--red)';
-    emailInput.focus();
-    setTimeout(() => emailInput.style.borderColor = '', 2000);
-    return;
-  }
-
-  // Verifica se Firebase já carregou
-  if (!window._fbResetPassword || !window._fbAuth) {
-    errEl.textContent = 'Aguarde um momento e tente novamente.';
-    return;
-  }
-
-  // Feedback visual imediato
-  okEl.textContent = '⏳ Enviando...';
-
-  try {
-    await window._fbResetPassword(window._fbAuth, email);
-    okEl.textContent = '✅ E-mail enviado! Verifique sua caixa de entrada (e o spam).';
-    errEl.textContent = '';
-  } catch(e) {
-    okEl.textContent = '';
-    errEl.textContent = _firebaseError(e.code);
-  }
-};
-
-window._doLogout = async function() {
-  if (!confirm('Sair da conta?')) return;
-  await window._fbSignOut(window._fbAuth);
-};
-
-function _firebaseError(code) {
+window._firebaseError = function(code) {
   const map = {
     'auth/user-not-found': 'Usuário não encontrado.',
     'auth/wrong-password': 'Senha incorreta.',
@@ -992,7 +981,7 @@ function _firebaseError(code) {
     'auth/popup-blocked': 'Popup bloqueado. Permita popups para este site.',
   };
   return map[code] || 'Erro: ' + code;
-}
+};
 
 // ─── NOME DA PELADA ────────────────────────────────────────────────────────
 const PELADA_NAME_KEY = 'pelada_kf_nome';
