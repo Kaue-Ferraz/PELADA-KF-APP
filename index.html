@@ -1,0 +1,2783 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d3b1e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pelada KF">
+<title>Controle de Pelada KF ⚽</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1db954;
+    --green-dark: #0d3b1e;
+    --green-mid: #145228;
+    --green-light: #d4f7e0;
+    --gold: #f4c430;
+    --blue: #3b82f6;
+    --blue-light: #dbeafe;
+    --red: #ef4444;
+    --red-light: #fee2e2;
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  .header {
+    background: linear-gradient(135deg, var(--green-dark) 0%, #0a2e12 100%);
+    padding: 18px 20px 14px; text-align: center;
+    border-bottom: 2px solid var(--green);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; letter-spacing: 3px; color: var(--green); line-height: 1; }
+  .header-sub { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 1px; margin-top: 2px; }
+  .save-indicator { font-size: 0.65rem; margin-top: 4px; height: 14px; transition: all .3s; }
+  .save-indicator.saving { color: var(--gold); }
+  .save-indicator.saved { color: var(--green); }
+  .save-indicator.error { color: var(--red); }
+
+  .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 80px; z-index: 99; }
+  .tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s; letter-spacing: .5px; text-transform: uppercase; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .tab-icon { font-size: 1.1rem; display: block; margin-bottom: 2px; }
+
+  .page { display: none; padding: 16px; padding-bottom: 40px; }
+  .page.active { display: block; }
+
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+  .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(--green); margin-bottom: 12px; }
+
+  input[type=text], input[type=number], select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem; padding: 10px 14px; outline: none; transition: border-color .2s; -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--green); }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; border-radius: var(--radius-sm); border: none; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; cursor: pointer; transition: all .15s; }
+  .btn:active { transform: scale(.97); }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; padding: 8px; font-family: 'Nunito'; font-weight: 700; letter-spacing: 0; }
+  .btn-sm { padding: 7px 12px; font-size: 0.8rem; width: auto; font-family: 'Nunito'; font-weight: 700; letter-spacing: 0; }
+
+  .section-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+
+  .nivel-selector { display: flex; gap: 6px; margin-bottom: 4px; }
+  .nivel-btn { flex: 1; padding: 8px 4px; border-radius: 8px; border: 2px solid var(--border); background: var(--surface2); color: var(--text-muted); font-family: 'Bebas Neue', sans-serif; font-size: 1rem; cursor: pointer; text-align: center; transition: all .15s; }
+  .nivel-btn.sel-1 { border-color: #555; background: #2a2a2a; color: #ccc; }
+  .nivel-btn.sel-2 { border-color: #5a8a50; background: #1a2e14; color: #7dc96e; }
+  .nivel-btn.sel-3 { border-color: #1db954; background: #0d3b1e; color: #1db954; }
+  .nivel-btn.sel-4 { border-color: var(--blue); background: #0d1f3c; color: #60a5fa; }
+  .nivel-btn.sel-5 { border-color: var(--red); background: #2e0a0a; color: #f87171; }
+  .nivel-hint { font-size: 0.65rem; text-align: center; color: var(--text-muted); }
+
+  .player-list { display: flex; flex-direction: column; gap: 8px; }
+  .player-item { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); animation: slideIn .25s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+  .player-name { flex: 1; font-weight: 700; font-size: 0.95rem; }
+  .stars { color: var(--gold); font-size: 0.8rem; letter-spacing: -1px; }
+  .nivel-badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0; }
+  .n1 { background: #3f3f3f; color: #aaa; }
+  .n2 { background: #2d4a1e; color: #7dc96e; }
+  .n3 { background: #1a4a2e; color: #3ed96e; }
+  .n4 { background: #1a3a6b; color: #60a5fa; }
+  .n5 { background: #4a1a1a; color: #f87171; }
+  .del-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 1rem; padding: 4px; line-height: 1; transition: color .15s; }
+  .del-btn:active { color: var(--red); }
+
+  .presence-count { text-align: center; background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); }
+  .count-num { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--green); line-height: 1; }
+  .count-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+  .presence-item { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; border: 2px solid var(--border); cursor: pointer; transition: all .15s; margin-bottom: 8px; user-select: none; }
+  .presence-item.present { border-color: var(--green); background: #0d2e14; }
+  .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #444; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all .15s; flex-shrink: 0; }
+  .presence-item.present .check-circle { background: var(--green); border-color: var(--green); color: #000; }
+
+  .sort-container { display: flex; flex-direction: column; gap: 14px; }
+  .time-card { border-radius: var(--radius); padding: 14px; border: 2px solid; }
+  .time-card.verde { border-color: var(--green); background: linear-gradient(135deg, #0a2e14, #0a0a0a); }
+  .time-card.azul { border-color: var(--blue); background: linear-gradient(135deg, #0d1f3c, #0a0a0a); }
+  .time-card.vermelho { border-color: var(--red); background: linear-gradient(135deg, #2e0a0a, #0a0a0a); }
+  .time-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .time-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; }
+  .time-card.verde .time-name { color: var(--green); }
+  .time-card.azul .time-name { color: var(--blue); }
+  .time-card.vermelho .time-name { color: var(--red); }
+  .time-avg { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--surface2); padding: 3px 8px; border-radius: 20px; }
+  .time-player { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.04); margin-bottom: 6px; animation: popIn .3s ease; }
+  @keyframes popIn { 0% { opacity:0; transform:scale(0.85); } 70% { transform:scale(1.04); } 100% { opacity:1; transform:scale(1); } }
+  .time-player-name { flex: 1; font-weight: 700; font-size: 0.9rem; }
+  .time-player-num { font-size: 0.7rem; font-weight: 900; background: rgba(255,255,255,0.08); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-text { font-size: 0.9rem; line-height: 1.6; }
+
+  /* Loading overlay */
+  .loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; transition: opacity .4s; }
+  .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+  .loading-ball { font-size: 3rem; animation: bounce 0.8s infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+  .loading-text { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 3px; color: var(--green); margin-top: 16px; }
+  .loading-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--green); color: #000; padding: 10px 22px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; z-index: 9999; transition: transform .3s ease; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── FINANCEIRO ─────────────────────────────── */
+  .fin-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .fin-tab { flex: 1; padding: 9px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-weight: 700; font-size: 0.75rem; text-align: center; cursor: pointer; transition: all .2s; text-transform: uppercase; letter-spacing: .5px; }
+  .fin-tab.active { background: var(--green); color: #000; border-color: var(--green); }
+
+  .fin-page { display: none; }
+  .fin-page.active { display: block; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px 12px; border: 1px solid var(--border); text-align: center; }
+  .stat-box.green { border-color: var(--green); }
+  .stat-box.red { border-color: var(--red); }
+  .stat-box.gold { border-color: var(--gold); }
+  .stat-box.blue { border-color: var(--blue); }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; line-height: 1; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.red { color: var(--red); }
+  .stat-val.gold { color: var(--gold); }
+  .stat-val.blue { color: var(--blue); }
+  .stat-lbl { font-size: 0.62rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+
+  .month-select-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .month-select-row select { flex: 1; }
+
+  .player-fin-item { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; border: 2px solid var(--border); margin-bottom: 7px; cursor: pointer; transition: all .15s; }
+  .player-fin-item.pago { border-color: var(--green); background: #0d2e14; }
+  .player-fin-item.atencao { border-color: var(--gold); background: #2a1a00; }
+  .fin-check { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #444; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .player-fin-item.pago .fin-check { background: var(--green); border-color: var(--green); color: #000; }
+  .player-fin-item.atencao .fin-check { background: var(--gold); border-color: var(--gold); color: #000; }
+  .fin-name { flex: 1; font-weight: 700; font-size: 0.9rem; }
+  .fin-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .badge-pago { background: #0d3b1e; color: var(--green); }
+  .badge-pendente { background: #3b2200; color: var(--gold); }
+  .badge-atencao { background: #4a1a00; color: #ff6b35; }
+
+  .desp-item { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); margin-bottom: 7px; }
+  .desp-desc { flex: 1; font-size: 0.9rem; font-weight: 600; }
+  .desp-val { font-weight: 900; color: var(--red); font-size: 0.9rem; }
+  .desp-del { background: none; border: none; color: #555; cursor: pointer; font-size: 1rem; padding: 4px; }
+  .desp-del:active { color: var(--red); }
+
+  .resumo-bar { height: 14px; border-radius: 10px; background: var(--surface2); overflow: hidden; margin: 8px 0 4px; }
+  .resumo-bar-fill { height: 100%; border-radius: 10px; transition: width .5s ease; }
+
+  .month-history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface2); border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 7px; }
+
+  .entrada-item { display: flex; align-items: center; gap: 10px; background: #0d2e14; border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--green); margin-bottom: 7px; }
+  .entrada-desc { flex: 1; font-size: 0.9rem; font-weight: 600; }
+  .entrada-val { font-weight: 900; color: var(--green); font-size: 0.9rem; }
+  .entrada-del { background: none; border: none; color: #555; cursor: pointer; font-size: 1rem; padding: 4px; }
+  .entrada-del:active { color: var(--red); }
+
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    .header, .tabs, .page:not(.active), .fin-tabs, #finpage-mensalidades, #finpage-despesas, .no-print { display: none !important; }
+    #finpage-resumo { display: block !important; }
+    #vis-geral, #vis-mensal { display: block !important; }
+    .card { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; break-inside: avoid; }
+    .stat-box { border: 1px solid #ccc !important; background: #f5f5f5 !important; }
+    .stat-val { color: #000 !important; }
+    .stat-lbl { color: #555 !important; }
+    .card-title { color: #1a7a3a !important; }
+    .month-history-item { background: #f5f5f5 !important; border: 1px solid #ccc !important; }
+    .print-only { display: block !important; }
+    .btn { display: none !important; }
+  }
+  .print-only { display: none; }
+
+  .cfg-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+  .cfg-row input { flex: 1; }
+
+  #edit-modal input:focus, #edit-modal select:focus { border-color: var(--green); outline: none; }
+  #edit-modal select {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius-sm); color:var(--text); font-family:'Nunito',sans-serif;
+    font-size:0.95rem; padding:10px 14px; -webkit-appearance:none;
+  }
+
+  .pres-item { display:flex; align-items:center; gap:10px; background:var(--surface2); border-radius:var(--radius-sm); padding:10px 12px; border:1px solid var(--border); margin-bottom:8px; }
+  .pres-counter { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .pres-btn { width:28px; height:28px; border-radius:50%; border:none; font-size:1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
+  .pres-btn:active { transform:scale(.88); }
+  .pres-btn-minus { background:#2e0a0a; color:var(--red); }
+  .pres-btn-plus  { background:#0d2e14; color:var(--green); }
+  .pres-num { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--gold); min-width:26px; text-align:center; line-height:1; }
+  .rank-item { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--surface2); border-radius:var(--radius-sm); border:1px solid var(--border); margin-bottom:6px; }
+  .rank-pos { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--text-muted); width:22px; text-align:center; flex-shrink:0; }
+  .rank-pos.gold   { color:var(--gold); }
+  .rank-pos.silver { color:#aaa; }
+  .rank-pos.bronze { color:#cd7f32; }
+  .rank-bar-wrap { flex:1; }
+  .rank-bar-bg { height:6px; background:var(--border); border-radius:4px; margin-top:4px; overflow:hidden; }
+  .rank-bar-fill { height:100%; border-radius:4px; background:var(--green); transition:width .4s ease; }
+
+  /* ── LOGIN SCREEN ── */
+  .login-screen {
+    position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-screen.hidden { display: none; }
+  .login-logo { font-size: 3.5rem; margin-bottom: 10px; }
+  .login-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 4px; color: var(--green); margin-bottom: 4px; }
+  .login-sub { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 32px; }
+  .login-box { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .login-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+  .login-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Nunito', sans-serif; font-size: 1rem; padding: 12px 14px; outline: none; margin-bottom: 14px; -webkit-appearance: none; box-sizing: border-box; }
+  .login-input:focus { border-color: var(--green); }
+  .login-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); border: none; background: var(--green); color: #000; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px; cursor: pointer; margin-top: 4px; transition: opacity .15s; }
+  .login-btn:active { opacity: .85; }
+  .login-toggle { text-align: center; margin-top: 16px; font-size: 0.82rem; color: var(--text-muted); }
+  .login-toggle span { color: var(--green); cursor: pointer; font-weight: 700; }
+  .login-error { color: var(--red); font-size: 0.8rem; text-align: center; margin-top: 10px; min-height: 18px; }
+  .login-mode-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(--text); margin-bottom: 16px; text-align: center; }
+
+  .user-info-bar { display: flex; align-items: center; justify-content: space-between; background: var(--green-dark); padding: 6px 16px; font-size: 0.7rem; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .user-email { color: var(--green); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%; }
+  .logout-btn { background: none; border: 1px solid #444; color: #888; border-radius: 6px; padding: 3px 10px; font-size: 0.7rem; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; white-space: nowrap; }
+  .logout-btn:active { color: var(--red); border-color: var(--red); }
+</style>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc, setDoc }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyANepb8uTCw_Yh43JweTqmAIk0QaH4WvTI",
+    authDomain: "pelada-kf.firebaseapp.com",
+    projectId: "pelada-kf",
+    storageBucket: "pelada-kf.firebasestorage.app",
+    messagingSenderId: "588759368300",
+    appId: "1:588759368300:web:bf2ecccf9e906635f10e49"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // Expõe para o código legado
+  window._fbAuth = auth;
+  window._fbDb   = db;
+  window._fbDoc  = doc;
+  window._fbGetDoc  = getDoc;
+  window._fbSetDoc  = setDoc;
+  window._fbSignIn  = signInWithEmailAndPassword;
+  window._fbSignUp  = createUserWithEmailAndPassword;
+  window._fbSignOut = signOut;
+  window._fbOnAuth  = onAuthStateChanged;
+
+  // Inicia escuta de autenticação assim que o módulo carrega
+  window._fbOnAuth(auth, user => {
+    if (window._onAuthChange) window._onAuthChange(user);
+  });
+</script>
+
+</head>
+<body>
+
+<!-- Tela de Login -->
+<div class="login-screen" id="login-screen">
+  <div class="login-logo">⚽</div>
+  <div class="login-title">Pelada KF</div>
+  <div class="login-sub">KAUÊ FERRAZ · GERENCIADOR DE TIMES</div>
+  <div class="login-box">
+    <div class="login-mode-title" id="login-mode-title">ENTRAR</div>
+    <div class="login-label">E-mail</div>
+    <input class="login-input" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+    <div class="login-label">Senha</div>
+    <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter') window._doLogin()">
+    <div class="login-label" id="login-confirm-label" style="display:none">Confirmar Senha</div>
+    <input class="login-input" type="password" id="login-pass2" placeholder="••••••••" style="display:none"
+      onkeydown="if(event.key==='Enter') window._doLogin()">
+    <button class="login-btn" onclick="window._doLogin()">ENTRAR</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-toggle">
+      <span id="login-toggle-link" onclick="window._toggleLoginMode()">Não tem conta? Cadastrar</span>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-ball">⚽</div>
+  <div class="loading-text">Controle de Pelada KF</div>
+  <div class="loading-sub">Carregando dados...</div>
+</div>
+
+<div class="header">
+  <div class="header-title">⚽ Controle de Pelada KF</div>
+  <div class="header-sub">KAUÊ FERRAZ · GERENCIADOR DE TIMES</div>
+  <div class="save-indicator" id="save-indicator"></div>
+</div>
+<div class="user-info-bar" id="user-info-bar" style="display:none">
+  <span class="user-email" id="user-email-label">—</span>
+  <button class="logout-btn" onclick="window._doLogout()">Sair</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('jogadores')"><span class="tab-icon">👥</span>JOGADORES</div>
+  <div class="tab" onclick="showTab('presenca')"><span class="tab-icon">✅</span>PRESENÇA</div>
+  <div class="tab" onclick="showTab('times')"><span class="tab-icon">🎲</span>TIMES</div>
+  <div class="tab" onclick="showTab('financeiro')"><span class="tab-icon">💰</span>CAIXA</div>
+</div>
+
+<!-- JOGADORES -->
+<div class="page active" id="page-jogadores">
+  <div class="card">
+    <div class="card-title">➕ Adicionar Jogador</div>
+    <div style="margin-bottom:10px">
+      <div class="section-label">Nome do jogador</div>
+      <input type="text" id="input-nome" placeholder="Ex: Carlos, João..." maxlength="30" onkeydown="if(event.key==='Enter') addPlayer()">
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="section-label">Nível de habilidade</div>
+      <div class="nivel-selector" id="nivel-selector">
+        <div class="nivel-btn" onclick="selectNivel(1)">1</div>
+        <div class="nivel-btn" onclick="selectNivel(2)">2</div>
+        <div class="nivel-btn" onclick="selectNivel(3)">3</div>
+        <div class="nivel-btn" onclick="selectNivel(4)">4</div>
+        <div class="nivel-btn" onclick="selectNivel(5)">5</div>
+      </div>
+      <div class="nivel-hint">1=Fraco · 2=Regular · 3=Bom · 4=Muito bom · 5=Craque</div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="section-label">Mês de início da mensalidade</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select id="input-mes-ref">
+          <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+          <option value="03">Março</option><option value="04">Abril</option>
+          <option value="05">Maio</option><option value="06">Junho</option>
+          <option value="07">Julho</option><option value="08">Agosto</option>
+          <option value="09">Setembro</option><option value="10">Outubro</option>
+          <option value="11">Novembro</option><option value="12">Dezembro</option>
+        </select>
+        <input type="number" id="input-ano-ref" placeholder="Ano" min="2020" max="2099">
+      </div>
+      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">A pendência conta a partir deste mês</div>
+    </div>
+    <button class="btn btn-green" onclick="addPlayer()">✚ ADICIONAR</button>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <div class="section-label" id="player-count-label">0 jogadores</div>
+    <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 Limpar tudo</button>
+  </div>
+
+  <!-- Toggle Ativos / Histórico -->
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <button id="btn-pl-ativos" onclick="setPlayerView('ativos')"
+      style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--green);background:var(--green);color:#000;font-weight:900;font-size:0.8rem;cursor:pointer">
+      ⚽ Ativos
+    </button>
+    <button id="btn-pl-historico" onclick="setPlayerView('historico')"
+      style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:0.8rem;cursor:pointer">
+      📋 Histórico
+    </button>
+  </div>
+
+  <div class="player-list" id="player-list"></div>
+</div>
+
+<!-- PRESENÇA -->
+<div class="page" id="page-presenca">
+
+  <!-- Sub-toggle Hoje / Por Mês -->
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <button id="btn-pres-hoje" onclick="setPresView('hoje')"
+      style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--green);background:var(--green);color:#000;font-weight:900;font-size:0.8rem;cursor:pointer">
+      ✅ Hoje
+    </button>
+    <button id="btn-pres-mes" onclick="setPresView('mes')"
+      style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:0.8rem;cursor:pointer">
+      📅 Por Mês
+    </button>
+  </div>
+
+  <!-- PAINEL HOJE -->
+  <div id="pres-painel-hoje">
+    <div class="presence-count">
+      <div class="count-num" id="present-count">0</div>
+      <div class="count-label">Presentes hoje</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-outline" style="flex:1" onclick="selectAll(true)">☑ Todos</button>
+      <button class="btn btn-outline" style="flex:1" onclick="selectAll(false)">☐ Nenhum</button>
+    </div>
+    <button class="btn btn-green" onclick="confirmarPelada()" style="margin-bottom:12px">
+      ⚽ CONFIRMAR PELADA DE HOJE
+    </button>
+    <div id="presence-list"></div>
+  </div>
+
+  <!-- PAINEL POR MÊS -->
+  <div id="pres-painel-mes" style="display:none">
+
+    <!-- Seletor mês/ano -->
+    <div class="card">
+      <div class="card-title">📅 Presenças por Mês</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="section-label">Mês</div>
+          <select id="sel-pres-mes" onchange="renderPresencaMes()">
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div>
+          <div class="section-label">Ano</div>
+          <input type="number" id="input-pres-ano" min="2020" max="2099" oninput="renderPresencaMes()">
+        </div>
+      </div>
+      <div id="pres-mes-total" style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-bottom:10px"></div>
+      <div id="pres-mes-list"></div>
+      <button class="btn no-print" onclick="imprimirRelatorioPresencas()" style="margin-top:12px;background:#1a3a6b;color:#60a5fa;border:1px solid #3b82f6;font-family:Nunito,sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0">
+        🖨️ IMPRIMIR / SALVAR PDF
+      </button>
+    </div>
+
+    <!-- Ranking -->
+    <div class="card">
+      <div class="card-title">🏆 Ranking de Presença</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px">Total acumulado de todas as peladas</div>
+      <div id="pres-ranking-list"></div>
+    </div>
+
+    <!-- Histórico mês a mês -->
+    <div class="card">
+      <div class="card-title">📊 Histórico Mensal</div>
+      <div id="pres-historico-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIMES -->
+<div class="page" id="page-times">
+  <div class="card">
+    <div class="card-title">🎲 Sortear Times</div>
+    <div id="sort-info" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
+      Marque os presentes e sorteie!
+    </div>
+    <button class="btn btn-gold" onclick="sortearTimes()">⚡ SORTEAR AGORA</button>
+    <div style="margin-top:8px">
+      <button class="btn btn-outline" onclick="sortearTimes()">🔄 Ressortear</button>
+    </div>
+  </div>
+  <div id="times-result">
+    <div class="empty-state"><div class="empty-icon">⚽</div><div class="empty-text">Clique em <strong>Sortear Agora</strong><br>para gerar os times!</div></div>
+  </div>
+</div>
+
+<!-- FINANCEIRO -->
+<div class="page" id="page-financeiro">
+
+  <!-- Sub-tabs financeiro -->
+  <div class="fin-tabs">
+    <div class="fin-tab active" onclick="showFinTab('mensalidades')">💳 Mensalidades</div>
+    <div class="fin-tab" onclick="showFinTab('despesas')">🧾 Despesas</div>
+    <div class="fin-tab" onclick="showFinTab('resumo')">📊 Resumo</div>
+  </div>
+
+  <!-- ── MENSALIDADES ── -->
+  <div class="fin-page active" id="finpage-mensalidades">
+    <div class="card">
+      <div class="card-title">⚙️ Configurações</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <div class="section-label">Valor mensalidade (R$)</div>
+          <input type="number" id="input-mensalidade" placeholder="25.00" step="0.01" min="0">
+        </div>
+        <div>
+          <div class="section-label">Ano de referência</div>
+          <input type="number" id="input-ano" placeholder="2025" min="2020" max="2099">
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="salvarConfigs()" style="margin-top:2px">💾 SALVAR CONFIGURAÇÕES</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 Pagamentos — <span id="titulo-ano-pag" style="color:var(--gold)"></span></div>
+      <div style="margin-bottom:12px">
+        <div class="section-label">Selecionar mês</div>
+        <div id="meses-btns" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+      <div id="mes-selecionado-label" style="font-size:0.75rem;font-weight:700;color:var(--green);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;"></div>
+      <div id="fin-player-list">
+        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">Cadastre jogadores na aba Jogadores!</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:#1a1a1a">
+      <div style="font-size:0.72rem;color:var(--text-muted);line-height:1.9">
+        ✅ <strong style="color:var(--green)">Pago</strong> — mensalidade quitada no mês<br>
+        ⚠️ <strong style="color:#ff6b35">Atenção</strong> — 2+ meses em atraso até o mês atual<br>
+        ⏳ <strong style="color:#888">Pendente</strong> — ainda não pagou este mês
+      </div>
+    </div>
+
+    <!-- Ajuste de saldo manual -->
+    <div class="card" style="border-color:#3b3b00">
+      <div class="card-title" style="color:var(--gold)">🔧 Ajuste de Saldo do Mês</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+        Use para corrigir valores sem origem identificada. Um ajuste <strong style="color:var(--red)">negativo</strong> desconta do saldo (ex: -50 para remover R$50 a mais). Um ajuste <strong style="color:var(--green)">positivo</strong> acrescenta.
+      </div>
+      <div id="ajuste-mes-label" style="font-size:0.75rem;font-weight:700;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px">
+        <div style="flex:1">
+          <div class="section-label">Descrição do ajuste</div>
+          <input type="text" id="input-ajuste-desc" placeholder="Ex: Valor não identificado..." maxlength="60">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:12px">
+        <div style="flex:1">
+          <div class="section-label">Valor (use negativo para descontar)</div>
+          <input type="number" id="input-ajuste-val" placeholder="Ex: -50.00 ou +30.00" step="0.01">
+        </div>
+      </div>
+      <button class="btn" onclick="addAjuste()" style="background:#2a2200;color:var(--gold);border:1px solid var(--gold);font-family:Nunito,sans-serif;font-weight:900;font-size:0.9rem;letter-spacing:0">
+        🔧 APLICAR AJUSTE
+      </button>
+      <div id="ajuste-list" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Botão imprimir relatório da aba mensalidades -->
+    <div class="card no-print" style="border-color:#1a3a6b">
+      <div class="card-title" style="color:#60a5fa">🖨️ Relatório de Mensalidades</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+        Gera um relatório do mês selecionado com os pagamentos, inadimplentes e jogadores em atraso.
+      </div>
+      <button class="btn" onclick="imprimirRelatorioMensalidades()" style="background:#1a3a6b;color:#60a5fa;border:1px solid #3b82f6;font-family:Nunito,sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0">
+        🖨️ IMPRIMIR / SALVAR PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── DESPESAS ── -->
+  <div class="fin-page" id="finpage-despesas">
+
+    <!-- Sub-toggle Despesas / Entradas Avulsas -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="btn-desp-desp" onclick="setDespView('despesas')"
+        style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--red);background:var(--red);color:#fff;font-weight:900;font-size:0.8rem;cursor:pointer">
+        🧾 Despesas
+      </button>
+      <button id="btn-desp-entrada" onclick="setDespView('entradas')"
+        style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:0.8rem;cursor:pointer">
+        💚 Entradas Avulsas
+      </button>
+    </div>
+
+    <!-- PAINEL DESPESAS -->
+    <div id="desp-painel">
+    <div class="card">
+      <div class="card-title">➕ Registrar Despesa</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <div class="section-label">Ano</div>
+          <input type="number" id="input-desp-ano" placeholder="2025" min="2020" max="2099">
+        </div>
+        <div>
+          <div class="section-label">Mês</div>
+          <select id="sel-mes-desp">
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div class="section-label">Descrição</div>
+        <input type="text" id="input-desp-desc" placeholder="Ex: Aluguel do campo, bola nova..." maxlength="60">
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="section-label">Valor (R$)</div>
+        <input type="number" id="input-desp-val" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <button class="btn btn-green" onclick="addDespesa()">✚ ADICIONAR DESPESA</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🧾 Lançamentos de Despesas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="section-label">Filtrar ano</div>
+          <input type="number" id="input-desp-view-ano" placeholder="2025" min="2020" max="2099" oninput="renderDespesas()">
+        </div>
+        <div>
+          <div class="section-label">Filtrar mês</div>
+          <select id="sel-mes-desp-view" onchange="renderDespesas()">
+            <option value="">Todos os meses</option>
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+      </div>
+      <div id="desp-list"></div>
+      <div id="desp-total" style="text-align:right; margin-top:8px; font-size:0.9rem; color:var(--red); font-weight:900; padding-top:8px; border-top:1px solid var(--border)"></div>
+    </div>
+  </div> <!-- fim desp-painel -->
+
+    <!-- PAINEL ENTRADAS AVULSAS -->
+    <div id="entrada-painel" style="display:none">
+    <div class="card" style="border-color:var(--green)">
+      <div class="card-title">💚 Registrar Entrada Avulsa</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+        Use para patrocínios, visitantes que pagaram, rifas, qualquer receita extra fora da mensalidade.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <div class="section-label">Ano</div>
+          <input type="number" id="input-entrada-ano" placeholder="2025" min="2020" max="2099">
+        </div>
+        <div>
+          <div class="section-label">Mês</div>
+          <select id="sel-mes-entrada">
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div class="section-label">Descrição</div>
+        <input type="text" id="input-entrada-desc" placeholder="Ex: Patrocínio XYZ, Visitante João..." maxlength="60">
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="section-label">Valor (R$)</div>
+        <input type="number" id="input-entrada-val" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <button class="btn btn-green" onclick="addEntrada()">💚 ADICIONAR ENTRADA</button>
+    </div>
+
+    <div class="card" style="border-color:var(--green)">
+      <div class="card-title">💚 Lançamentos de Entradas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="section-label">Filtrar ano</div>
+          <input type="number" id="input-entrada-view-ano" placeholder="2025" min="2020" max="2099" oninput="renderEntradas()">
+        </div>
+        <div>
+          <div class="section-label">Filtrar mês</div>
+          <select id="sel-mes-entrada-view" onchange="renderEntradas()">
+            <option value="">Todos os meses</option>
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+      </div>
+      <div id="entrada-list"></div>
+      <div id="entrada-total" style="text-align:right; margin-top:8px; font-size:0.9rem; color:var(--green); font-weight:900; padding-top:8px; border-top:1px solid var(--border)"></div>
+    </div>
+    </div> <!-- fim entrada-painel -->
+
+  </div>
+
+  <!-- ── RESUMO ── -->
+  <div class="fin-page" id="finpage-resumo">
+
+    <!-- Toggle Geral / Mensal -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="btn-vis-geral" onclick="setVisaoResumo('geral')"
+        style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--green);background:var(--green);color:#000;font-weight:900;font-size:0.82rem;cursor:pointer">
+        🌐 Visão Geral
+      </button>
+      <button id="btn-vis-mensal" onclick="setVisaoResumo('mensal')"
+        style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:0.82rem;cursor:pointer">
+        📅 Por Mês
+      </button>
+    </div>
+
+    <!-- ── VISÃO GERAL ── -->
+    <div id="vis-geral">
+      <div class="card">
+        <div class="card-title">🌐 Totais Gerais — <span id="res-geral-ano" style="color:var(--gold)"></span></div>
+        <div style="margin-bottom:10px">
+          <div class="section-label">Ano</div>
+          <input type="number" id="input-resumo-ano-geral" placeholder="2025" min="2020" max="2099" oninput="renderResumoGeral()">
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box green"><div class="stat-val green" id="res-g-receita">R$ 0</div><div class="stat-lbl">Receita Mensalidades</div></div>
+          <div class="stat-box green" style="border-color:#00aa66"><div class="stat-val green" id="res-g-entradas" style="color:#00cc77">R$ 0</div><div class="stat-lbl">Entradas Avulsas</div></div>
+          <div class="stat-box red"><div class="stat-val red" id="res-g-despesa">R$ 0</div><div class="stat-lbl">Despesas Total</div></div>
+          <div class="stat-box gold" style="grid-column:1/-1"><div class="stat-val" id="res-g-saldo" style="font-size:2rem">R$ 0</div><div class="stat-lbl">💰 Saldo Final</div></div>
+        </div>
+        <button class="btn no-print" onclick="imprimirRelatorioAnual()" style="margin-top:10px;background:#1a3a6b;color:#60a5fa;border:1px solid #3b82f6;font-family:Nunito,sans-serif;font-size:0.88rem;font-weight:700;letter-spacing:0">🖨️ Imprimir / Salvar PDF (Ano Inteiro)</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 Pagamentos por Jogador</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px">Clique em um jogador para ver o histórico mês a mês</div>
+        <div id="jogador-pagamentos-list"></div>
+      </div>
+
+      <div class="card" style="border-color:var(--gold)">
+        <div class="card-title" style="color:var(--gold)">⚠️ Jogadores em Atraso</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px">Referência: mês atual do sistema</div>
+        <div id="atencao-list-geral"></div>
+      </div>
+    </div>
+
+    <!-- ── VISÃO MENSAL ── -->
+    <div id="vis-mensal" style="display:none">
+      <div class="card">
+        <div class="card-title">📅 Dashboard Mensal</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div>
+            <div class="section-label">Ano</div>
+            <input type="number" id="input-resumo-ano" placeholder="2025" min="2020" max="2099" oninput="renderResumo()">
+          </div>
+          <div>
+            <div class="section-label">Mês</div>
+            <select id="sel-mes-resumo" onchange="renderResumo()">
+              <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+              <option value="03">Março</option><option value="04">Abril</option>
+              <option value="05">Maio</option><option value="06">Junho</option>
+              <option value="07">Julho</option><option value="08">Agosto</option>
+              <option value="09">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box green"><div class="stat-val green" id="res-receita">R$ 0</div><div class="stat-lbl">Mensalidades</div></div>
+          <div class="stat-box green" style="border-color:#00aa66"><div class="stat-val green" id="res-entradas" style="color:#00cc77">R$ 0</div><div class="stat-lbl">Entradas Avulsas</div></div>
+          <div class="stat-box red"><div class="stat-val red" id="res-despesa">R$ 0</div><div class="stat-lbl">Despesas</div></div>
+          <div class="stat-box gold"><div class="stat-val gold" id="res-saldo">R$ 0</div><div class="stat-lbl">Saldo</div></div>
+          <div class="stat-box blue" style="grid-column:1/-1"><div class="stat-val blue" id="res-inadimplentes">0</div><div class="stat-lbl">Pendentes no Mês</div></div>
+        </div>
+        <div class="section-label" style="margin-top:4px">Arrecadação do mês (mensalidades)</div>
+        <div class="resumo-bar"><div class="resumo-bar-fill" id="bar-arrecad" style="background:var(--green);width:0%"></div></div>
+        <div id="bar-label" style="font-size:0.72rem;color:var(--text-muted);text-align:right"></div>
+        <button class="btn no-print" onclick="imprimirRelatorioMensal()" style="margin-top:10px;background:#1a3a6b;color:#60a5fa;border:1px solid #3b82f6;font-family:Nunito,sans-serif;font-size:0.88rem;font-weight:700;letter-spacing:0">🖨️ Imprimir / Salvar PDF (Mês)</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Histórico por Mês</div>
+        <div id="historico-list">
+          <div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">Nenhum lançamento ainda.</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:var(--gold)">
+        <div class="card-title" style="color:var(--gold)">⚠️ Jogadores em Atraso</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px">Referência: mês atual do sistema</div>
+        <div id="atencao-list"></div>
+      </div>
+
+      <div class="card no-print" style="border-color:#ff3b3b;margin-top:8px">
+        <div class="card-title" style="color:var(--red)">🗑️ Zerar Lançamentos</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+          Remove <strong style="color:#f87171">todos</strong> os lançamentos de despesas, entradas avulsas e mensalidades. Os jogadores cadastrados são mantidos. Use para começar um novo período do zero.
+        </div>
+        <button class="btn" onclick="zerarLancamentos()" style="background:#2e0a0a;color:var(--red);border:1px solid var(--red);font-family:Nunito,sans-serif;font-weight:900;font-size:0.9rem;letter-spacing:0">
+          🗑️ ZERAR TODOS OS LANÇAMENTOS
+        </button>
+      </div>
+
+    </div> <!-- fim vis-mensal -->
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let players = [];
+let selectedNivel = 3;
+const STORAGE_KEY = 'pelada_kf_players';
+let _currentUid = null;
+
+// ─── LOGIN / AUTH UI ───────────────────────────────────────────────────────
+let _loginMode = 'login'; // 'login' | 'register'
+
+window._toggleLoginMode = function() {
+  _loginMode = _loginMode === 'login' ? 'register' : 'login';
+  document.getElementById('login-mode-title').textContent  = _loginMode === 'login' ? 'ENTRAR' : 'CRIAR CONTA';
+  document.getElementById('login-toggle-link').textContent = _loginMode === 'login' ? 'Não tem conta? Cadastrar' : 'Já tem conta? Entrar';
+  const confirmLabel = document.getElementById('login-confirm-label');
+  const confirmInput = document.getElementById('login-pass2');
+  confirmLabel.style.display = _loginMode === 'register' ? '' : 'none';
+  confirmInput.style.display = _loginMode === 'register' ? '' : 'none';
+  document.querySelector('.login-btn').textContent = _loginMode === 'login' ? 'ENTRAR' : 'CADASTRAR';
+  document.getElementById('login-error').textContent = '';
+};
+
+window._doLogin = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const pass2 = document.getElementById('login-pass2').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+  if (_loginMode === 'register') {
+    if (pass !== pass2) { errEl.textContent = 'As senhas não conferem.'; return; }
+    if (pass.length < 6) { errEl.textContent = 'A senha precisa ter ao menos 6 caracteres.'; return; }
+    try {
+      await window._fbSignUp(window._fbAuth, email, pass);
+    } catch(e) {
+      errEl.textContent = _firebaseError(e.code);
+    }
+  } else {
+    try {
+      await window._fbSignIn(window._fbAuth, email, pass);
+    } catch(e) {
+      errEl.textContent = _firebaseError(e.code);
+    }
+  }
+};
+
+window._doLogout = async function() {
+  if (!confirm('Sair da conta?')) return;
+  await window._fbSignOut(window._fbAuth);
+};
+
+function _firebaseError(code) {
+  const map = {
+    'auth/user-not-found': 'Usuário não encontrado.',
+    'auth/wrong-password': 'Senha incorreta.',
+    'auth/invalid-email': 'E-mail inválido.',
+    'auth/email-already-in-use': 'E-mail já cadastrado.',
+    'auth/weak-password': 'Senha fraca (mínimo 6 caracteres).',
+    'auth/invalid-credential': 'E-mail ou senha incorretos.',
+    'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
+    'auth/network-request-failed': 'Sem conexão com a internet.',
+  };
+  return map[code] || 'Erro: ' + code;
+}
+
+// ─── FIREBASE STORAGE ─────────────────────────────────────────────────────
+async function storageGet(key) {
+  if (!_currentUid) return null;
+  try {
+    const ref  = window._fbDoc(window._fbDb, 'users', _currentUid, 'data', key);
+    const snap = await window._fbGetDoc(ref);
+    return snap.exists() ? snap.data().value : null;
+  } catch(e) {
+    console.warn('storageGet error', e);
+    return null;
+  }
+}
+
+async function storageSet(key, value) {
+  if (!_currentUid) return false;
+  try {
+    const ref = window._fbDoc(window._fbDb, 'users', _currentUid, 'data', key);
+    await window._fbSetDoc(ref, { value });
+    return true;
+  } catch(e) {
+    console.warn('storageSet error', e);
+    return false;
+  }
+}
+
+// ─── LOAD / SAVE ──────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const saved = await storageGet(STORAGE_KEY);
+    if (saved) players = JSON.parse(saved);
+  } catch(e) { players = []; }
+}
+
+let saveTimer = null;
+async function saveData() {
+  setSaveIndicator('saving', '💾 Salvando...');
+  try {
+    const ok = await storageSet(STORAGE_KEY, JSON.stringify(players));
+    setSaveIndicator('saved', ok ? '✅ Salvo!' : '⚠️ Salvo localmente');
+  } catch(e) {
+    setSaveIndicator('error', '❌ Erro ao salvar');
+  }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => setSaveIndicator('', ''), 2500);
+}
+
+function setSaveIndicator(cls, msg) {
+  const el = document.getElementById('save-indicator');
+  el.className = 'save-indicator ' + cls;
+  el.textContent = msg;
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = ['jogadores','presenca','times','financeiro'].indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  if (name === 'presenca') { renderPresence(); initPresencaMes(); }
+  if (name === 'times') updateSortInfo();
+  if (name === 'financeiro') initFinanceiro();
+}
+
+// ─── NIVEL SELECTOR ───────────────────────────────────────────────────────
+function selectNivel(n) {
+  selectedNivel = n;
+  document.querySelectorAll('.nivel-btn').forEach((btn, i) => {
+    btn.className = 'nivel-btn';
+    if (i + 1 === n) btn.classList.add('sel-' + n);
+  });
+}
+
+// ─── ADD PLAYER ───────────────────────────────────────────────────────────
+async function addPlayer() {
+  const input = document.getElementById('input-nome');
+  const nome = input.value.trim();
+  if (!nome) { toast('Digite o nome!'); return; }
+  if (players.find(p => p.nome.toLowerCase() === nome.toLowerCase())) { toast('Jogador já cadastrado!'); return; }
+  const mesRef = document.getElementById('input-mes-ref').value;
+  const anoRef = parseInt(document.getElementById('input-ano-ref').value) || anoSistema();
+  const mesInicio = anoRef + '-' + mesRef; // 'YYYY-MM'
+  players.push({ id: Date.now(), nome, nivel: selectedNivel, presente: false, mesInicio });
+  await saveData();
+  input.value = '';
+  input.focus();
+  renderPlayers();
+  toast('✅ ' + nome + ' adicionado!');
+}
+
+// ─── RENDER PLAYERS ───────────────────────────────────────────────────────
+function renderPlayers() {
+  const list = document.getElementById('player-list');
+  document.getElementById('player-count-label').textContent =
+    players.length + ' jogador' + (players.length !== 1 ? 'es' : '') + ' cadastrado' + (players.length !== 1 ? 's' : '');
+
+  if (players.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">👟</div><div class="empty-text">Nenhum jogador ainda.<br>Adicione acima!</div></div>`;
+    return;
+  }
+  const sorted = [...players].sort((a, b) => b.nivel - a.nivel);
+  list.innerHTML = sorted.map(p => {
+    const [aRef, mRef] = (p.mesInicio || '').split('-');
+    const refLabel = (aRef && mRef) ? `<div style="font-size:0.65rem;color:var(--text-muted)">📅 Desde ${NOMES_MESES[parseInt(mRef)-1]} ${aRef}</div>` : '';
+    return `
+    <div class="player-item">
+      <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+      <div style="flex:1">
+        <div class="player-name">${esc(p.nome)}</div>
+        ${refLabel}
+      </div>
+      <div class="stars">${'★'.repeat(p.nivel)}${'☆'.repeat(5-p.nivel)}</div>
+      <button class="del-btn" onclick="editNivel(${p.id})">✏️</button>
+      <button class="del-btn" onclick="deletePlayer(${p.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function editNivel(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+
+  // Remove modal anterior se existir
+  document.getElementById('edit-modal')?.remove();
+
+  const [anoAtual, mesAtual] = (p.mesInicio || ((finData.ano || anoSistema()) + '-01')).split('-');
+  const mesesOpts = NOMES_MESES.map((n,i) => {
+    const v = String(i+1).padStart(2,'0');
+    return `<option value="${v}" ${v === mesAtual ? 'selected' : ''}>${n}</option>`;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'edit-modal';
+  modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px`;
+  modal.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;width:100%;max-width:360px">
+      <div style="font-family:'Bebas Neue';font-size:1.2rem;color:var(--green);letter-spacing:2px;margin-bottom:16px">✏️ Editar — ${esc(p.nome)}</div>
+
+      <div style="margin-bottom:12px">
+        <div class="section-label">Nível de habilidade</div>
+        <div style="display:flex;gap:6px" id="edit-nivel-btns">
+          ${[1,2,3,4,5].map(n => `
+            <button onclick="editSelectNivel(${n})" id="edit-n${n}"
+              style="flex:1;padding:10px 4px;border-radius:8px;border:2px solid var(--border);
+                     background:${p.nivel===n?'var(--green)':'var(--surface2)'};
+                     color:${p.nivel===n?'#000':'var(--text-muted)'};
+                     font-family:'Bebas Neue';font-size:1.1rem;cursor:pointer;transition:all .15s">
+              ${n}
+            </button>`).join('')}
+        </div>
+        <div class="nivel-hint" style="margin-top:4px">1=Fraco · 2=Regular · 3=Bom · 4=Muito bom · 5=Craque</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div class="section-label">Mês de início da mensalidade</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <select id="edit-mes-ref">${mesesOpts}</select>
+          <input type="number" id="edit-ano-ref" value="${anoAtual}" min="2020" max="2099" placeholder="Ano"
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:10px 14px;font-family:Nunito,sans-serif;font-size:0.95rem;outline:none">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button onclick="confirmarEditPlayer(${id})" class="btn btn-green" style="flex:1">✅ SALVAR</button>
+        <button onclick="document.getElementById('edit-modal').remove()" class="btn btn-outline" style="flex:1">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  // Guarda nível selecionado no modal
+  window._editNivel = p.nivel;
+}
+
+function editSelectNivel(n) {
+  window._editNivel = n;
+  [1,2,3,4,5].forEach(i => {
+    const btn = document.getElementById('edit-n' + i);
+    if (!btn) return;
+    btn.style.background = i === n ? 'var(--green)' : 'var(--surface2)';
+    btn.style.color      = i === n ? '#000'         : 'var(--text-muted)';
+    btn.style.borderColor= i === n ? 'var(--green)' : 'var(--border)';
+  });
+}
+
+async function confirmarEditPlayer(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  const novoNivel = window._editNivel || p.nivel;
+  const novoMes   = document.getElementById('edit-mes-ref').value;
+  const novoAno   = parseInt(document.getElementById('edit-ano-ref').value);
+  if (isNaN(novoAno) || novoAno < 2020 || novoAno > 2099) { toast('Ano inválido!'); return; }
+  p.nivel = novoNivel;
+  p.mesInicio = novoAno + '-' + novoMes;
+  await saveData();
+  document.getElementById('edit-modal')?.remove();
+  renderPlayers();
+  renderPresence();
+  toast('✅ ' + p.nome + ' atualizado!');
+}
+
+async function deletePlayer(id) {
+  // Soft-delete: torna inativo em vez de remover
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Inativar "${p.nome}"?\n\nO histórico financeiro dele será preservado.\nVocê poderá reativar depois.`)) return;
+  p.ativo = false;
+  p.dataInativacao = new Date().toISOString().slice(0,10);
+  await saveData();
+  renderPlayers();
+  renderPresence();
+  toast('⏸ ' + p.nome + ' inativado.');
+}
+
+async function reativarPlayer(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  p.ativo = true;
+  delete p.dataInativacao;
+  await saveData();
+  renderPlayers();
+  renderPresence();
+  toast('✅ ' + p.nome + ' reativado!');
+}
+
+async function excluirDefinitivo(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Excluir "${p.nome}" DEFINITIVAMENTE?\n\nIsto não pode ser desfeito.\nOs valores pagos permanecem no caixa.`)) return;
+  players = players.filter(x => x.id !== id);
+  await saveData();
+  renderPlayers();
+  toast('🗑 ' + p.nome + ' excluído.');
+}
+
+async function clearAll() {
+  if (!confirm('Limpar todos os jogadores ativos?')) return;
+  players.forEach(p => { if (p.ativo !== false) { p.ativo = false; p.dataInativacao = new Date().toISOString().slice(0,10); } });
+  await saveData();
+  renderPlayers();
+  renderPresence();
+}
+
+// ─── PLAYER VIEW ─────────────────────────────────────────────────────────
+let playerView = 'ativos';
+
+function setPlayerView(v) {
+  playerView = v;
+  const btnA = document.getElementById('btn-pl-ativos');
+  const btnH = document.getElementById('btn-pl-historico');
+  if (btnA) {
+    btnA.style.background  = v === 'ativos' ? 'var(--green)'    : 'var(--surface2)';
+    btnA.style.color        = v === 'ativos' ? '#000'            : 'var(--text-muted)';
+    btnA.style.borderColor  = v === 'ativos' ? 'var(--green)'    : 'var(--border)';
+    btnH.style.background  = v === 'historico' ? 'var(--gold)'   : 'var(--surface2)';
+    btnH.style.color        = v === 'historico' ? '#000'         : 'var(--text-muted)';
+    btnH.style.borderColor  = v === 'historico' ? 'var(--gold)'  : 'var(--border)';
+  }
+  renderPlayers();
+}
+
+// ─── RENDER PLAYERS ───────────────────────────────────────────────────────
+function renderPlayers() {
+  const list = document.getElementById('player-list');
+
+  // Ativos = ativo !== false; Inativos = ativo === false
+  const ativos   = players.filter(p => p.ativo !== false);
+  const inativos = players.filter(p => p.ativo === false);
+
+  document.getElementById('player-count-label').textContent =
+    ativos.length + ' ativo' + (ativos.length !== 1 ? 's' : '') +
+    (inativos.length > 0 ? ` · ${inativos.length} inativo${inativos.length !== 1 ? 's' : ''}` : '');
+
+  if (playerView === 'ativos') {
+    if (ativos.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">👟</div><div class="empty-text">Nenhum jogador ativo.<br>Adicione acima!</div></div>`;
+      return;
+    }
+    const sorted = [...ativos].sort((a, b) => b.nivel - a.nivel);
+    list.innerHTML = sorted.map(p => {
+      const [aRef, mRef] = (p.mesInicio || '').split('-');
+      const refLabel = (aRef && mRef) ? `<div style="font-size:0.62rem;color:var(--text-muted)">📅 Desde ${NOMES_MESES[parseInt(mRef)-1]} ${aRef}</div>` : '';
+      return `
+      <div class="player-item">
+        <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+        <div style="flex:1">
+          <div class="player-name">${esc(p.nome)}</div>
+          ${refLabel}
+        </div>
+        <div class="stars">${'★'.repeat(p.nivel)}${'☆'.repeat(5-p.nivel)}</div>
+        <button class="del-btn" onclick="editNivel(${p.id})" title="Editar">✏️</button>
+        <button class="del-btn" onclick="deletePlayer(${p.id})" title="Inativar">⏸</button>
+      </div>`;
+    }).join('');
+
+  } else {
+    // Histórico: mostra inativos
+    if (inativos.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Nenhum jogador inativo ainda.</div></div>`;
+      return;
+    }
+    const sorted = [...inativos].sort((a, b) => a.nome.localeCompare(b.nome));
+    list.innerHTML = sorted.map(p => {
+      const [aRef, mRef] = (p.mesInicio || '').split('-');
+      const refLabel = (aRef && mRef) ? `<div style="font-size:0.62rem;color:var(--text-muted)">📅 Início: ${NOMES_MESES[parseInt(mRef)-1]} ${aRef}</div>` : '';
+      const dataInativ = p.dataInativacao ? `<div style="font-size:0.62rem;color:var(--red);opacity:.8">⏸ Inativado: ${p.dataInativacao}</div>` : '';
+
+      // Calcula total pago pelo jogador (histórico financeiro)
+      let totalPago = 0;
+      Object.values(finData.pagamentos).forEach(mes => { if (mes[p.id]) totalPago += (finData.mensalidade || 25); });
+
+      return `
+      <div class="player-item" style="border-color:#3a3a3a;opacity:.85">
+        <div class="nivel-badge n${p.nivel}" style="opacity:.6">${p.nivel}</div>
+        <div style="flex:1">
+          <div class="player-name" style="color:var(--text-muted)">${esc(p.nome)}</div>
+          ${refLabel}
+          ${dataInativ}
+          ${totalPago > 0 ? `<div style="font-size:0.62rem;color:var(--green);opacity:.8">💰 Total pago: R$ ${totalPago.toFixed(2)}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <button class="del-btn" onclick="reativarPlayer(${p.id})" title="Reativar"
+            style="color:var(--green);font-size:0.72rem;font-weight:700;padding:4px 8px;border:1px solid var(--green);border-radius:6px">
+            ▶ Reativar
+          </button>
+          <button class="del-btn" onclick="excluirDefinitivo(${p.id})" title="Excluir definitivo"
+            style="color:var(--red);font-size:0.65rem;padding:2px 6px">
+            🗑 Excluir
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+function renderPresence() {
+  const list = document.getElementById('presence-list');
+  const ativos = players.filter(p => p.ativo !== false);
+  document.getElementById('present-count').textContent = ativos.filter(p => p.presente).length;
+
+  if (ativos.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Cadastre jogadores primeiro!</div></div>`;
+    return;
+  }
+  const sorted = [...ativos].sort((a, b) => a.nome.localeCompare(b.nome));
+  list.innerHTML = sorted.map(p => `
+    <div class="presence-item ${p.presente ? 'present' : ''}" onclick="togglePresence(${p.id})">
+      <div class="check-circle">${p.presente ? '✓' : ''}</div>
+      <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+      <div style="flex:1">
+        <div style="font-weight:700">${esc(p.nome)}</div>
+        <div class="stars" style="font-size:0.72rem">${'★'.repeat(p.nivel)}${'☆'.repeat(5-p.nivel)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function togglePresence(id) {
+  const p = players.find(x => x.id === id);
+  if (p) { p.presente = !p.presente; await saveData(); renderPresence(); updateSortInfo(); }
+}
+
+async function selectAll(val) {
+  players.filter(p => p.ativo !== false).forEach(p => p.presente = val);
+  await saveData(); renderPresence(); updateSortInfo();
+}
+
+// ─── SORT INFO ────────────────────────────────────────────────────────────
+function updateSortInfo() {
+  const presentes = players.filter(p => p.ativo !== false && p.presente);
+  const el = document.getElementById('sort-info');
+  if (!el) return;
+  if (presentes.length === 0) {
+    el.innerHTML = 'Marque os presentes e sorteie!';
+  } else {
+    const times = Math.floor(presentes.length / 6);
+    const resto = presentes.length % 6;
+    el.innerHTML = `<strong style="color:var(--green)">${presentes.length} presentes</strong> · ${times > 0 ? times + ' time(s) de 6' : '<span style="color:var(--red)">mínimo 6 para sortear</span>'}${resto > 0 ? (times > 0 ? ' + ' : '') + resto + ' reserva(s)' : ''}`;
+  }
+}
+
+// ─── SORTEAR ──────────────────────────────────────────────────────────────
+function mediaTime(time) {
+  return time.length ? time.reduce((s, p) => s + p.nivel, 0) / time.length : 0;
+}
+
+function sortearTimes() {
+  const presentes = players.filter(p => p.ativo !== false && p.presente);
+  if (presentes.length < 6) { toast('Marque pelo menos 6 presentes!'); return; }
+
+  const numTimesCompletos = Math.floor(presentes.length / 6);
+  const resto = presentes.length % 6;
+  // Total de grupos: sempre coloca o incompleto (se existir) como o ULTIMO
+  const numTimes = resto > 0 ? numTimesCompletos + 1 : numTimesCompletos;
+
+  // 1. Embaralha dentro de cada nivel
+  const porNivel = {1:[], 2:[], 3:[], 4:[], 5:[]};
+  presentes.forEach(p => porNivel[p.nivel].push(p));
+  Object.values(porNivel).forEach(arr => arr.sort(() => Math.random() - 0.5));
+  const todosOrdenados = [];
+  for (let n = 5; n >= 1; n--) todosOrdenados.push(...porNivel[n]);
+
+  // 2. Distribui nos times COMPLETOS (0..numTimesCompletos-1) via snake draft
+  //    depois distribui os restantes no ultimo grupo
+  const grupos = Array.from({length: numTimes}, () => []);
+  let dir = 1, cur = 0;
+  // Distribui apenas entre os times completos
+  const jogadoresCompletos = todosOrdenados.slice(0, numTimesCompletos * 6);
+  jogadoresCompletos.forEach(p => {
+    grupos[cur].push(p);
+    cur += dir;
+    if (cur >= numTimesCompletos) { cur = numTimesCompletos - 1; dir = -1; }
+    else if (cur < 0) { cur = 0; dir = 1; }
+  });
+
+  // 3. Os restantes vao direto pro ultimo grupo
+  if (resto > 0) {
+    todosOrdenados.slice(numTimesCompletos * 6).forEach(p => grupos[numTimes - 1].push(p));
+
+    // 4. Equilibra o ultimo time: faz trocas com os outros para nivelar a media
+    const mediaGeral = presentes.reduce((s, p) => s + p.nivel, 0) / presentes.length;
+    const grupoResto = grupos[numTimes - 1];
+    for (let tentativa = 0; tentativa < 40; tentativa++) {
+      const diff = mediaTime(grupoResto) - mediaGeral;
+      if (Math.abs(diff) <= 0.4) break;
+      let melhorTroca = null, melhorMelhoria = 0;
+      for (let r = 0; r < grupoResto.length; r++) {
+        for (let t = 0; t < numTimesCompletos; t++) {
+          for (let j = 0; j < grupos[t].length; j++) {
+            const pr = grupoResto[r], pt = grupos[t][j];
+            if (pr.nivel === pt.nivel) continue;
+            const novaMedia = grupoResto.reduce((s,p,i) => s + (i===r ? pt.nivel : p.nivel), 0) / grupoResto.length;
+            const melhoria = Math.abs(diff) - Math.abs(novaMedia - mediaGeral);
+            if (melhoria > melhorMelhoria) { melhorMelhoria = melhoria; melhorTroca = {r,t,j}; }
+          }
+        }
+      }
+      if (!melhorTroca || melhorMelhoria < 0.05) break;
+      const {r,t,j} = melhorTroca;
+      [grupoResto[r], grupos[t][j]] = [grupos[t][j], grupoResto[r]];
+    }
+  }
+
+  renderTimes(grupos, resto > 0);
+}
+
+function renderTimes(grupos, temIncompleto = false) {
+  const result = document.getElementById('times-result');
+  const cores = [
+    { classe: 'verde',    cor: 'var(--green)' },
+    { classe: 'azul',     cor: 'var(--blue)' },
+    { classe: 'vermelho', cor: 'var(--red)' },
+  ];
+
+  // Reordena: times completos primeiro, incompleto por ultimo
+  const ordenados = temIncompleto
+    ? [...grupos.filter(g => g.length === 6), ...grupos.filter(g => g.length < 6)]
+    : grupos;
+
+  let html = '<div class="sort-container">';
+  ordenados.forEach((time, idx) => {
+    const eIncompleto = temIncompleto && time.length < 6;
+    const cfg = cores[idx % cores.length];
+    const avg = time.length ? (time.reduce((s, p) => s + p.nivel, 0) / time.length).toFixed(1) : '-';
+    const corCard = eIncompleto ? 'border-color:var(--gold);background:linear-gradient(135deg,#2a1a00,#0a0a0a)' : '';
+    const corNome = eIncompleto ? 'color:var(--gold)' : `color:${cfg.cor}`;
+    const classeCard = eIncompleto ? '' : cfg.classe;
+    html += `
+      <div class="time-card ${classeCard}" ${eIncompleto ? `style="${corCard}"` : ''}>
+        <div class="time-header">
+          <div class="time-name" style="${corNome}">⚽ Time ${idx + 1}${eIncompleto ? ' ⚠️' : ''}</div>
+          <div class="time-avg">⭐ ${avg} &nbsp;·&nbsp; ${time.length}/6</div>
+        </div>
+        ${eIncompleto ? `<div style="font-size:0.72rem;color:var(--gold);margin-bottom:8px;opacity:0.8">Time incompleto (${time.length} de 6)</div>` : ''}
+        ${time.map((p, i) => `
+          <div class="time-player">
+            <div class="time-player-num">${i+1}</div>
+            <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+            <div class="time-player-name">${esc(p.nome)}</div>
+            <div style="font-size:0.7rem;color:#555">${'★'.repeat(p.nivel)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  });
+
+  html += '</div>';
+  result.innerHTML = html;
+  toast('🎲 Times sorteados!');
+}
+
+// ─── FINANCEIRO ───────────────────────────────────────────────────────────
+const FIN_KEY = 'pelada_kf_financeiro';
+let finData = {
+  mensalidade: 25,
+  ano: new Date().getFullYear(),
+  pagamentos: {},   // { 'YYYY-MM': { playerId: true } }
+  despesas: {},     // { 'YYYY-MM': [ {id, desc, valor} ] }
+  entradas: {},     // { 'YYYY-MM': [ {id, desc, valor} ] }
+  ajustes: {},      // { 'YYYY-MM': [ {id, desc, valor} ] }
+  presencas: {}     // { 'YYYY-MM': { playerId: N } }  ← contagem mensal
+};
+
+// Mês atualmente selecionado na aba mensalidades (número 1-12)
+let mesPagSelecionado = new Date().getMonth() + 1;
+
+const NOMES_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+async function loadFinData() {
+  try {
+    const saved = await storageGet(FIN_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      finData = { ...finData, ...parsed };
+    }
+  } catch(e) {}
+}
+
+async function saveFinData() {
+  try {
+    await storageSet(FIN_KEY, JSON.stringify(finData));
+    setSaveIndicator('saved', '✅ Salvo!');
+    setTimeout(() => setSaveIndicator('',''), 2000);
+  } catch(e) {
+    setSaveIndicator('error', '❌ Erro ao salvar');
+  }
+}
+
+// Retorna chave 'YYYY-MM' a partir de ano e mês (1-12)
+function mesKey(ano, mes) {
+  return ano + '-' + String(mes).padStart(2,'0');
+}
+
+// Converte 'YYYY-MM' para número inteiro YYYYMM para comparação
+function keyToInt(key) {
+  const [a, m] = key.split('-');
+  return parseInt(a) * 100 + parseInt(m);
+}
+
+// Ano/mês atual do sistema real
+function anoSistema() { return new Date().getFullYear(); }
+function mesSistema()  { return new Date().getMonth() + 1; }
+function keyAtual()    { return mesKey(anoSistema(), mesSistema()); }
+
+// ── Quantos meses em atraso levando em conta o mesInicio do jogador ──
+// Alerta (⚠️) só aparece se tiver 2+ meses consecutivos em atraso contando de trás pra frente.
+// Jogador sem mesInicio: usa Janeiro do ano configurado como padrão.
+function mesesEmAtraso(player) {
+  const anoRef  = anoSistema();
+  const mesRef  = mesSistema();
+
+  // Define o início: campo salvo ou padrão Janeiro do ano configurado
+  const inicio = player.mesInicio || ((finData.ano || anoRef) + '-01');
+  const inicioInt = keyToInt(inicio);
+
+  // Conta meses CONSECUTIVOS não pagos imediatamente antes do mês atual
+  let atraso = 0;
+  for (let i = 1; i <= 36; i++) {
+    let m = mesRef - i;
+    let a = anoRef;
+    while (m <= 0) { m += 12; a--; }
+    const k = mesKey(a, m);
+    const kInt = keyToInt(k);
+    if (kInt < inicioInt) break; // antes do início: para
+    const pag = finData.pagamentos[k] || {};
+    if (pag[player.id]) break;  // encontrou pagamento: sequência parou
+    atraso++;
+  }
+  return atraso;
+}
+
+function initFinanceiro() {
+  const anoAtual = anoSistema();
+  const mesAtual = mesSistema();
+
+  // Preenche campos config com valores salvos
+  document.getElementById('input-mensalidade').value = finData.mensalidade || 25;
+  document.getElementById('input-ano').value = finData.ano || anoAtual;
+
+  // Preenche campos despesas
+  document.getElementById('input-desp-ano').value = finData.ano || anoAtual;
+  document.getElementById('sel-mes-desp').value = String(mesAtual).padStart(2,'0');
+
+  // Preenche campos entradas avulsas
+  const entAno = document.getElementById('input-entrada-ano');
+  const entMes = document.getElementById('sel-mes-entrada');
+  const entViewAno = document.getElementById('input-entrada-view-ano');
+  const entViewMes = document.getElementById('sel-mes-entrada-view');
+  if (entAno) entAno.value = finData.ano || anoAtual;
+  if (entMes) entMes.value = String(mesAtual).padStart(2,'0');
+  if (entViewAno) entViewAno.value = finData.ano || anoAtual;
+  if (entViewMes) entViewMes.value = String(mesAtual).padStart(2,'0');
+
+  // Garante entradas, ajustes e presencas no finData
+  if (!finData.entradas)  finData.entradas  = {};
+  if (!finData.ajustes)   finData.ajustes   = {};
+  if (!finData.presencas) finData.presencas = {};
+
+  // Inicializa toggle despesas/entradas
+  setDespView('despesas');
+
+  // Preenche campos view despesas
+  document.getElementById('input-desp-view-ano').value = finData.ano || anoAtual;
+  document.getElementById('sel-mes-desp-view').value = String(mesAtual).padStart(2,'0');
+
+  // Preenche resumo
+  document.getElementById('input-resumo-ano').value = finData.ano || anoAtual;
+  document.getElementById('sel-mes-resumo').value = String(mesAtual).padStart(2,'0');
+  const inputGeralAno = document.getElementById('input-resumo-ano-geral');
+  if (inputGeralAno) inputGeralAno.value = finData.ano || anoAtual;
+
+  // Preenche mês/ano de referência do form de jogadores (se disponível)
+  const inputMesRef = document.getElementById('input-mes-ref');
+  const inputAnoRef = document.getElementById('input-ano-ref');
+  if (inputMesRef) inputMesRef.value = String(mesAtual).padStart(2,'0');
+  if (inputAnoRef) inputAnoRef.value = anoAtual;
+
+  // Garante mês selecionado válido
+  mesPagSelecionado = mesAtual;
+
+  renderBotoesMeses();
+  renderMensalidades();
+  renderDespesas();
+  renderResumoGeral();
+  renderResumo();
+  // Garante que o toggle visual esteja correto
+  setVisaoResumo(visaoResumo);
+}
+
+function showFinTab(name) {
+  document.querySelectorAll('.fin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.fin-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('finpage-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.fin-tab');
+  const idx = ['mensalidades','despesas','resumo'].indexOf(name);
+  tabs[idx].classList.add('active');
+  if (name === 'mensalidades') renderMensalidades();
+  if (name === 'despesas') { renderDespesas(); renderEntradas(); }
+  if (name === 'resumo') { renderResumoGeral(); renderResumo(); }
+}
+
+async function salvarConfigs() {
+  const valMens = parseFloat(document.getElementById('input-mensalidade').value);
+  const valAno  = parseInt(document.getElementById('input-ano').value);
+  if (isNaN(valMens) || valMens <= 0) { toast('Informe um valor de mensalidade válido!'); return; }
+  if (isNaN(valAno) || valAno < 2020 || valAno > 2099) { toast('Informe um ano válido (2020-2099)!'); return; }
+  finData.mensalidade = valMens;
+  finData.ano = valAno;
+  await saveFinData();
+  toast('✅ Configurações salvas!');
+  sincronizarAnoEmTudo(valAno);
+}
+
+// Propaga o ano para todos os campos e re-renderiza tudo
+function sincronizarAnoEmTudo(ano) {
+  // Despesas
+  const dAno = document.getElementById('input-desp-ano');
+  const dvAno = document.getElementById('input-desp-view-ano');
+  const rAno  = document.getElementById('input-resumo-ano');
+  const rgAno = document.getElementById('input-resumo-ano-geral');
+  if (dAno)  dAno.value  = ano;
+  if (dvAno) dvAno.value = ano;
+  if (rAno)  rAno.value  = ano;
+  if (rgAno) rgAno.value = ano;
+
+  renderBotoesMeses();
+  renderMensalidades();
+  renderDespesas();
+  if (visaoResumo === 'geral')  renderResumoGeral();
+  if (visaoResumo === 'mensal') renderResumo();
+  // Renderiza ambos para manter dados atualizados
+  renderResumoGeral();
+  renderResumo();
+}
+
+// ── Botões de meses (Jan~Dez) na aba mensalidades ──
+function renderBotoesMeses() {
+  const ano = finData.ano || anoSistema();
+  document.getElementById('titulo-ano-pag').textContent = ano;
+  const container = document.getElementById('meses-btns');
+  if (!container) return;
+  container.innerHTML = NOMES_MESES.map((nome, idx) => {
+    const m = idx + 1;
+    const sel = m === mesPagSelecionado;
+    const bg     = sel ? 'var(--green)'    : 'var(--surface2)';
+    const cor    = sel ? '#000'            : 'var(--text-muted)';
+    const border = sel ? 'var(--green)'    : 'var(--border)';
+    const fw     = sel ? '900'             : '700';
+    const shadow = sel ? '0 0 8px #1db95466' : 'none';
+    return `<button onclick="selecionarMesPag(${m})"
+      style="padding:8px 6px;border-radius:8px;border:2px solid ${border};
+             background:${bg};color:${cor};cursor:pointer;
+             font-family:Nunito,sans-serif;font-size:0.8rem;font-weight:${fw};
+             transition:all .15s;box-shadow:${shadow};min-width:44px">
+      ${nome.slice(0,3)}</button>`;
+  }).join('');
+}
+
+function selecionarMesPag(m) {
+  mesPagSelecionado = m;
+  renderBotoesMeses();
+  renderMensalidades();
+}
+
+function renderMensalidades() {
+  const ano = finData.ano || anoSistema();
+  const mes = mesPagSelecionado;
+  const key = mesKey(ano, mes);
+  const list = document.getElementById('fin-player-list');
+  const label = document.getElementById('mes-selecionado-label');
+  if (!list) return;
+
+  if (label) label.textContent = `📅 ${NOMES_MESES[mes-1]} de ${ano}`;
+  renderAjustes();
+
+  const ativos = players.filter(p => p.ativo !== false);
+  if (ativos.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">Cadastre jogadores na aba Jogadores!</div></div>`;
+    return;
+  }
+
+  const pag = finData.pagamentos[key] || {};
+  const sorted = [...ativos].sort((a,b) => a.nome.localeCompare(b.nome));
+
+  // Calcula resumo do mês
+  const totalPagos = sorted.filter(p => !!pag[p.id]).length;
+  const totalPendentes = sorted.length - totalPagos;
+  const valorArrecadado = totalPagos * (finData.mensalidade || 25);
+
+  list.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div style="flex:1;text-align:center;background:#0d2e14;border:1px solid var(--green);border-radius:10px;padding:8px">
+        <div style="font-family:'Bebas Neue';font-size:1.4rem;color:var(--green)">${totalPagos}</div>
+        <div style="font-size:0.62rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Pagos</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#2a1a00;border:1px solid var(--gold);border-radius:10px;padding:8px">
+        <div style="font-family:'Bebas Neue';font-size:1.4rem;color:var(--gold)">${totalPendentes}</div>
+        <div style="font-size:0.62rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Pendentes</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#0d1f3c;border:1px solid var(--blue);border-radius:10px;padding:8px">
+        <div style="font-family:'Bebas Neue';font-size:1.1rem;color:var(--blue)">R$${valorArrecadado.toFixed(0)}</div>
+        <div style="font-size:0.62rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Arrecad.</div>
+      </div>
+    </div>
+    ` + sorted.map(p => {
+    const paid = !!pag[p.id];
+    const atraso = mesesEmAtraso(p);
+    // Alerta se NÃO pagou o mês visualizado E tem 2+ meses em atraso (contando do mês atual do sistema)
+    const isAtencao = !paid && atraso >= 2;
+    const cls = paid ? 'pago' : (isAtencao ? 'atencao' : '');
+    const icon = paid ? '✓' : (isAtencao ? '⚠' : '');
+    const badge = paid
+      ? `<span class="fin-badge badge-pago">✅ Pago</span>`
+      : isAtencao
+        ? `<span class="fin-badge badge-atencao">⚠️ ${atraso}m atraso</span>`
+        : `<span class="fin-badge badge-pendente">⏳ Pendente</span>`;
+    return `
+      <div class="player-fin-item ${cls}" onclick="togglePagamento(${p.id})">
+        <div class="fin-check">${icon}</div>
+        <div class="fin-name">${esc(p.nome)}</div>
+        ${badge}
+      </div>`;
+  }).join('');
+}
+
+async function togglePagamento(playerId) {
+  const ano = finData.ano || anoSistema();
+  const key = mesKey(ano, mesPagSelecionado);
+  if (!finData.pagamentos[key]) finData.pagamentos[key] = {};
+  const atual = finData.pagamentos[key][playerId];
+  if (atual) {
+    delete finData.pagamentos[key][playerId];
+    toast('❌ Pagamento removido');
+  } else {
+    finData.pagamentos[key][playerId] = true;
+    toast('✅ Pagamento registrado!');
+  }
+  await saveFinData();
+  renderMensalidades();
+  renderResumo();
+}
+
+// ── DESPESAS ──
+async function addDespesa() {
+  const anoInput = parseInt(document.getElementById('input-desp-ano').value);
+  const mesInput = document.getElementById('sel-mes-desp').value;
+  const desc = document.getElementById('input-desp-desc').value.trim();
+  const val  = parseFloat(document.getElementById('input-desp-val').value);
+  if (isNaN(anoInput) || anoInput < 2020) { toast('Informe um ano válido!'); return; }
+  if (!mesInput) { toast('Selecione o mês!'); return; }
+  if (!desc) { toast('Informe a descrição!'); return; }
+  if (isNaN(val) || val <= 0) { toast('Informe um valor válido!'); return; }
+  const key = anoInput + '-' + mesInput;
+  if (!finData.despesas[key]) finData.despesas[key] = [];
+  finData.despesas[key].push({ id: Date.now(), desc, valor: val });
+  await saveFinData();
+  document.getElementById('input-desp-desc').value = '';
+  document.getElementById('input-desp-val').value = '';
+  // Sincroniza filtro de visualização
+  document.getElementById('input-desp-view-ano').value = anoInput;
+  document.getElementById('sel-mes-desp-view').value = mesInput;
+  renderDespesas();
+  renderResumo();
+  renderResumoGeral();
+  toast('🧾 Despesa adicionada!');
+}
+
+async function delDespesa(key, id) {
+  if (!finData.despesas[key]) return;
+  finData.despesas[key] = finData.despesas[key].filter(d => d.id !== id);
+  await saveFinData();
+  renderDespesas();
+  renderResumo();
+  renderResumoGeral();
+  toast('Despesa removida.');
+}
+
+function renderDespesas() {
+  const anoFiltro = parseInt(document.getElementById('input-desp-view-ano')?.value) || 0;
+  const mesFiltro = document.getElementById('sel-mes-desp-view')?.value || '';
+  const list     = document.getElementById('desp-list');
+  const totalEl  = document.getElementById('desp-total');
+  if (!list) return;
+
+  // Coleta todas as chaves que batem com o filtro
+  let chavesFiltradas = Object.keys(finData.despesas).filter(key => {
+    const [a, m] = key.split('-');
+    const aBate = !anoFiltro || parseInt(a) === anoFiltro;
+    const mBate = !mesFiltro || m === mesFiltro;
+    return aBate && mBate;
+  }).sort();
+
+  if (chavesFiltradas.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.85rem">Nenhuma despesa encontrada.</div>`;
+    totalEl.textContent = '';
+    return;
+  }
+
+  let total = 0;
+  let html = '';
+  chavesFiltradas.forEach(key => {
+    const [a, m] = key.split('-');
+    const nomeMes = NOMES_MESES[parseInt(m)-1];
+    const desps = finData.despesas[key] || [];
+    if (desps.length === 0) return;
+    html += `<div style="font-size:0.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px">${nomeMes} ${a}</div>`;
+    desps.forEach(d => {
+      total += d.valor;
+      html += `
+        <div class="desp-item">
+          <div class="desp-desc">${esc(d.desc)}</div>
+          <div class="desp-val">R$ ${d.valor.toFixed(2)}</div>
+          <button class="desp-del" onclick="delDespesa('${key}', ${d.id})">✕</button>
+        </div>`;
+    });
+  });
+
+  list.innerHTML = html || `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.85rem">Nenhuma despesa encontrada.</div>`;
+  totalEl.textContent = total > 0 ? `Total: R$ ${total.toFixed(2)}` : '';
+}
+
+// ── VISÃO RESUMO ──
+let visaoResumo = 'geral';
+
+function setVisaoResumo(v) {
+  visaoResumo = v;
+  document.getElementById('vis-geral').style.display  = v === 'geral'  ? 'block' : 'none';
+  document.getElementById('vis-mensal').style.display = v === 'mensal' ? 'block' : 'none';
+  const btnG = document.getElementById('btn-vis-geral');
+  const btnM = document.getElementById('btn-vis-mensal');
+  btnG.style.background = v === 'geral'  ? 'var(--green)' : 'var(--surface2)';
+  btnG.style.color       = v === 'geral'  ? '#000' : 'var(--text-muted)';
+  btnG.style.borderColor = v === 'geral'  ? 'var(--green)' : 'var(--border)';
+  btnM.style.background  = v === 'mensal' ? 'var(--green)' : 'var(--surface2)';
+  btnM.style.color        = v === 'mensal' ? '#000' : 'var(--text-muted)';
+  btnM.style.borderColor  = v === 'mensal' ? 'var(--green)' : 'var(--border)';
+  if (v === 'geral')  renderResumoGeral();
+  if (v === 'mensal') renderResumo();
+}
+
+// ── RESUMO GERAL (ano inteiro) ──
+function renderResumoGeral() {
+  const anoFiltro = parseInt(document.getElementById('input-resumo-ano-geral')?.value) || (finData.ano || anoSistema());
+  const elAno = document.getElementById('res-geral-ano');
+  if (elAno) elAno.textContent = anoFiltro;
+  if (!finData.entradas) finData.entradas = {};
+
+  let receita = 0, despTotal = 0, entTotal = 0, ajusteTotal = 0;
+  Object.keys(finData.pagamentos).forEach(key => {
+    if (!key.startsWith(anoFiltro + '-')) return;
+    receita += Object.values(finData.pagamentos[key]).filter(Boolean).length * (finData.mensalidade || 25);
+  });
+  Object.keys(finData.despesas).forEach(key => {
+    if (!key.startsWith(anoFiltro + '-')) return;
+    despTotal += (finData.despesas[key] || []).reduce((s,d) => s + d.valor, 0);
+  });
+  Object.keys(finData.entradas).forEach(key => {
+    if (!key.startsWith(anoFiltro + '-')) return;
+    entTotal += (finData.entradas[key] || []).reduce((s,e) => s + e.valor, 0);
+  });
+  if (finData.ajustes) {
+    Object.keys(finData.ajustes).forEach(key => {
+      if (!key.startsWith(anoFiltro + '-')) return;
+      ajusteTotal += (finData.ajustes[key] || []).reduce((s,a) => s + a.valor, 0);
+    });
+  }
+
+  const saldo = receita + entTotal + ajusteTotal - despTotal;
+  document.getElementById('res-g-receita').textContent  = 'R$ ' + receita.toFixed(2);
+  document.getElementById('res-g-entradas').textContent = 'R$ ' + entTotal.toFixed(2);
+  document.getElementById('res-g-despesa').textContent  = 'R$ ' + despTotal.toFixed(2);
+  const salEl = document.getElementById('res-g-saldo');
+  salEl.textContent = 'R$ ' + saldo.toFixed(2);
+  salEl.style.color = saldo >= 0 ? 'var(--green)' : 'var(--red)';
+
+  renderJogadorPagamentos(anoFiltro);
+  renderAtencaoListEl('atencao-list-geral');
+}
+
+// ── Tabela jogadores × meses clicável ──
+function renderJogadorPagamentos(ano) {
+  const el = document.getElementById('jogador-pagamentos-list');
+  const ativos = players.filter(p => p.ativo !== false);
+  if (!el || ativos.length === 0) {
+    if (el) el.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:16px;font-size:0.85rem">Nenhum jogador ativo.</div>`;
+    return;
+  }
+  const sorted = [...ativos].sort((a,b) => a.nome.localeCompare(b.nome));
+  let html = '';
+  sorted.forEach(p => {
+    const atraso = mesesEmAtraso(p);
+    const inicioInt = p.mesInicio ? keyToInt(p.mesInicio) : 0;
+    const mesesHtml = NOMES_MESES.map((nome, idx) => {
+      const m = idx + 1;
+      const key = mesKey(ano, m);
+      const kInt = keyToInt(key);
+      const ativo = inicioInt > 0 && kInt >= inicioInt;
+      if (!ativo) {
+        return `<div style="padding:3px 5px;border-radius:6px;background:#111;color:#333;font-size:0.62rem;text-align:center;font-weight:700">${nome.slice(0,3)}</div>`;
+      }
+      const paid = !!(finData.pagamentos[key] || {})[p.id];
+      const bg  = paid ? '#0d3b1e' : '#2a1200';
+      const cor = paid ? 'var(--green)' : '#ff6b35';
+      const icon = paid ? '✓' : '·';
+      return `<div onclick="togglePagamentoMes(${p.id},'${key}')"
+        style="padding:3px 5px;border-radius:6px;background:${bg};color:${cor};font-size:0.62rem;text-align:center;font-weight:700;cursor:pointer;border:1px solid ${cor}60">
+        ${nome.slice(0,3)}<br>${icon}</div>`;
+    }).join('');
+    html += `
+      <div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+          <div style="flex:1;font-weight:700;font-size:0.9rem">${esc(p.nome)}</div>
+          ${atraso >= 2 ? `<span class="fin-badge badge-atencao">⚠️ ${atraso}m</span>` : ''}
+          ${p.mesInicio ? `<span style="font-size:0.62rem;color:var(--text-muted)">desde ${p.mesInicio}</span>` : ''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">${mesesHtml}</div>
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+
+async function togglePagamentoMes(playerId, key) {
+  if (!finData.pagamentos[key]) finData.pagamentos[key] = {};
+  if (finData.pagamentos[key][playerId]) {
+    delete finData.pagamentos[key][playerId];
+    toast('❌ Pagamento removido');
+  } else {
+    finData.pagamentos[key][playerId] = true;
+    toast('✅ Pagamento registrado!');
+  }
+  await saveFinData();
+  renderResumoGeral();
+  renderMensalidades();
+}
+
+// ── RESUMO MENSAL ──
+function renderResumo() {
+  const anoFiltro = parseInt(document.getElementById('input-resumo-ano')?.value) || (finData.ano || anoSistema());
+  const mesFiltro = document.getElementById('sel-mes-resumo')?.value || String(mesSistema()).padStart(2,'0');
+  const key = anoFiltro + '-' + mesFiltro;
+
+  const ativos = players.filter(p => p.ativo !== false);
+  const pag = finData.pagamentos[key] || {};
+  const pagos = Object.values(pag).filter(Boolean).length;
+  const receita = pagos * (finData.mensalidade || 25);
+  const desps = finData.despesas[key] || [];
+  const despTotal = desps.reduce((s,d) => s + d.valor, 0);
+  const entradas = (finData.entradas || {})[key] || [];
+  const entTotal = entradas.reduce((s,e) => s + e.valor, 0);
+  const ajustes = (finData.ajustes || {})[key] || [];
+  const ajusteTotal = ajustes.reduce((s,a) => s + a.valor, 0);
+  const saldo = receita + entTotal + ajusteTotal - despTotal;
+  const pendentes = ativos.filter(p => !pag[p.id]).length;
+
+  document.getElementById('res-receita').textContent  = 'R$ ' + receita.toFixed(2);
+  document.getElementById('res-entradas').textContent = 'R$ ' + entTotal.toFixed(2);
+  document.getElementById('res-despesa').textContent  = 'R$ ' + despTotal.toFixed(2);
+  document.getElementById('res-saldo').textContent    = 'R$ ' + saldo.toFixed(2);
+  document.getElementById('res-saldo').style.color    = saldo >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('res-inadimplentes').textContent = pendentes;
+
+  const esperado = ativos.length * (finData.mensalidade || 25);
+  const pct = esperado > 0 ? Math.min(100, (receita / esperado) * 100) : 0;
+  document.getElementById('bar-arrecad').style.width = pct + '%';
+  document.getElementById('bar-label').textContent   = `R$ ${receita.toFixed(2)} de R$ ${esperado.toFixed(2)} esperados (${Math.round(pct)}%)`;
+
+  renderHistorico(anoFiltro);
+  renderAtencaoListEl('atencao-list');
+}
+
+function renderHistorico(anoFiltro) {
+  const el = document.getElementById('historico-list');
+  if (!el) return;
+
+  const todasChaves = new Set([
+    ...Object.keys(finData.pagamentos),
+    ...Object.keys(finData.despesas),
+    ...Object.keys(finData.entradas  || {}),
+    ...Object.keys(finData.ajustes   || {}),
+  ]);
+
+  const chavesFiltradas = [...todasChaves]
+    .filter(k => k.startsWith(anoFiltro + '-'))
+    .sort();
+
+  if (chavesFiltradas.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">Nenhum lançamento em ${anoFiltro}.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = chavesFiltradas.map(key => {
+    const [a, m] = key.split('-');
+    const pag = finData.pagamentos[key] || {};
+    const pagos = Object.values(pag).filter(Boolean).length;
+    const rec      = pagos * (finData.mensalidade || 25);
+    const desp     = (finData.despesas[key] || []).reduce((s,d) => s + d.valor, 0);
+    const ent      = ((finData.entradas || {})[key] || []).reduce((s,e) => s + e.valor, 0);
+    const ajuste   = ((finData.ajustes  || {})[key] || []).reduce((s,a) => s + a.valor, 0);
+    const sal      = rec + ent + ajuste - desp;
+    const nomeMes  = NOMES_MESES[parseInt(m)-1];
+    return `
+      <div class="month-history-item">
+        <div>
+          <div style="font-weight:700;font-size:0.88rem">${nomeMes} ${a}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted)">${pagos}/${players.filter(p=>p.ativo!==false).length} pago(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.8rem;color:var(--green)">+R$ ${rec.toFixed(2)}</div>
+          ${ent > 0    ? `<div style="font-size:0.75rem;color:#00cc77">+R$ ${ent.toFixed(2)} avulso</div>` : ''}
+          ${ajuste !== 0 ? `<div style="font-size:0.75rem;color:${ajuste>=0?'#00cc77':'var(--red)'}">${ajuste>=0?'+':''}R$ ${ajuste.toFixed(2)} ajuste</div>` : ''}
+          ${desp > 0   ? `<div style="font-size:0.75rem;color:var(--red)">-R$ ${desp.toFixed(2)}</div>` : ''}
+          <div style="font-size:0.85rem;font-weight:900;color:${sal>=0?'var(--green)':'var(--red)'}">= R$ ${sal.toFixed(2)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderAtencaoListEl(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const lista = players
+    .filter(p => p.ativo !== false)
+    .map(p => ({ p, atraso: mesesEmAtraso(p) }))
+    .filter(x => x.atraso >= 2)
+    .sort((a,b) => b.atraso - a.atraso);
+  if (lista.length === 0) {
+    el.innerHTML = `<div style="font-size:0.85rem;color:var(--text-muted)">✅ Nenhum jogador em atraso!</div>`;
+    return;
+  }
+  el.innerHTML = lista.map(({p, atraso}) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:1.3rem">⚠️</div>
+      <div style="flex:1;font-weight:700;font-size:0.9rem">${esc(p.nome)}</div>
+      <div style="font-size:0.75rem;color:#ff6b35;font-weight:700">${atraso} ${atraso===1?'mês':'meses'} em atraso</div>
+    </div>`).join('');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ─── AJUSTES MANUAIS DE SALDO ──────────────────────────────────────────────
+async function addAjuste() {
+  const ano = finData.ano || anoSistema();
+  const mes = mesPagSelecionado;
+  const key = mesKey(ano, mes);
+  const desc = document.getElementById('input-ajuste-desc').value.trim();
+  const val  = parseFloat(document.getElementById('input-ajuste-val').value);
+  if (!desc) { toast('Informe a descrição do ajuste!'); return; }
+  if (isNaN(val) || val === 0) { toast('Informe um valor diferente de zero!'); return; }
+  if (!finData.ajustes) finData.ajustes = {};
+  if (!finData.ajustes[key]) finData.ajustes[key] = [];
+  finData.ajustes[key].push({ id: Date.now(), desc, valor: val });
+  await saveFinData();
+  document.getElementById('input-ajuste-desc').value = '';
+  document.getElementById('input-ajuste-val').value = '';
+  renderAjustes();
+  renderResumo();
+  renderResumoGeral();
+  const sinal = val > 0 ? '+' : '';
+  toast(`🔧 Ajuste de ${sinal}R$ ${val.toFixed(2)} aplicado!`);
+}
+
+async function delAjuste(key, id) {
+  if (!finData.ajustes || !finData.ajustes[key]) return;
+  finData.ajustes[key] = finData.ajustes[key].filter(a => a.id !== id);
+  await saveFinData();
+  renderAjustes();
+  renderResumo();
+  renderResumoGeral();
+  toast('Ajuste removido.');
+}
+
+function renderAjustes() {
+  const ano = finData.ano || anoSistema();
+  const mes = mesPagSelecionado;
+  const key = mesKey(ano, mes);
+  const el = document.getElementById('ajuste-list');
+  const labelEl = document.getElementById('ajuste-mes-label');
+  if (!el) return;
+  if (!finData.ajustes) finData.ajustes = {};
+  if (labelEl) labelEl.textContent = `📅 ${NOMES_MESES[mes-1]} de ${ano}`;
+  const lista = finData.ajustes[key] || [];
+  if (lista.length === 0) {
+    el.innerHTML = `<div style="font-size:0.78rem;color:var(--text-muted);text-align:center;padding:8px">Nenhum ajuste neste mês.</div>`;
+    return;
+  }
+  el.innerHTML = lista.map(a => {
+    const positivo = a.valor > 0;
+    const cor = positivo ? 'var(--green)' : 'var(--red)';
+    const sinal = positivo ? '+' : '';
+    return `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:var(--radius-sm);padding:9px 12px;border:1px solid ${cor}40;margin-bottom:6px">
+        <div style="font-size:0.85rem;flex-shrink:0">${positivo ? '➕' : '➖'}</div>
+        <div style="flex:1;font-size:0.85rem;font-weight:600">${esc(a.desc)}</div>
+        <div style="font-weight:900;color:${cor};font-size:0.9rem">${sinal}R$ ${Math.abs(a.valor).toFixed(2)}</div>
+        <button onclick="delAjuste('${key}', ${a.id})" style="background:none;border:none;color:#555;cursor:pointer;font-size:0.9rem;padding:2px">✕</button>
+      </div>`;
+  }).join('');
+}
+
+// ─── RELATÓRIO DE MENSALIDADES (aba mensalidades) ─────────────────────────
+function imprimirRelatorioMensalidades() {
+  const ano = finData.ano || anoSistema();
+  const mes = mesPagSelecionado;
+  const key = mesKey(ano, mes);
+  const nomeMes = NOMES_MESES[mes - 1];
+
+  const ativos = players.filter(p => p.ativo !== false);
+  const pag = finData.pagamentos[key] || {};
+  const ajustes = (finData.ajustes || {})[key] || [];
+
+  const pagos     = ativos.filter(p => !!pag[p.id]).sort((a,b) => a.nome.localeCompare(b.nome));
+  const pendentes = ativos.filter(p => !pag[p.id]).sort((a,b) => a.nome.localeCompare(b.nome));
+  const emAtraso  = pendentes
+    .map(p => ({ p, atraso: mesesEmAtraso(p) }))
+    .filter(x => x.atraso >= 2)
+    .sort((a,b) => b.atraso - a.atraso);
+  const soPendenteSemAtraso = pendentes.filter(p => {
+    const at = mesesEmAtraso(p);
+    return at < 2;
+  });
+
+  const totalArrecadado = pagos.length * (finData.mensalidade || 25);
+  const totalAjuste = ajustes.reduce((s, a) => s + a.valor, 0);
+  const totalFinal = totalArrecadado + totalAjuste;
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Mensalidades ${nomeMes} ${ano}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #111; font-size: 14px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #1a7a3a; border-bottom: 3px solid #1a7a3a; padding-bottom: 10px; margin-bottom: 6px; }
+    .sub { color: #555; font-size: 0.85rem; margin-bottom: 20px; }
+    h2 { margin-top: 22px; font-size: 1rem; padding: 6px 12px; border-radius: 6px; }
+    h2.verde  { background: #e6f7ee; color: #1a7a3a; border-left: 4px solid #1a7a3a; }
+    h2.vermelho { background: #fff0f0; color: #cc0000; border-left: 4px solid #cc0000; }
+    h2.laranja { background: #fff4e0; color: #b34d00; border-left: 4px solid #f97316; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 4px; }
+    th { background: #145228; color: #fff; padding: 8px 12px; text-align: left; font-size: 0.85rem; }
+    td { padding: 7px 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .resumo { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 18px 0; }
+    .box { border: 1px solid #ccc; border-radius: 8px; padding: 12px; text-align: center; }
+    .box-val { font-size: 1.3rem; font-weight: 900; }
+    .green { color: #1a7a3a; } .red { color: #cc0000; } .orange { color: #b34d00; }
+    .empty { color: #aaa; font-style: italic; padding: 10px 12px; font-size: 0.85rem; }
+    .footer { margin-top: 30px; font-size: 0.75rem; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+    ${ajustes.length > 0 ? `.ajuste-item { display:flex; justify-content:space-between; padding:6px 12px; font-size:0.83rem; border-bottom:1px solid #eee; }` : ''}
+  </style></head><body>
+  <h1>⚽ Controle de Pelada KF — Mensalidades ${nomeMes} ${ano}</h1>
+  <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')} · Mensalidade: R$ ${(finData.mensalidade||25).toFixed(2)}</div>
+
+  <div class="resumo">
+    <div class="box"><div class="box-val green">${pagos.length}</div><div>Pagaram</div></div>
+    <div class="box"><div class="box-val red">${pendentes.length}</div><div>Pendentes</div></div>
+    <div class="box"><div class="box-val red">${emAtraso.length}</div><div>Em Atraso</div></div>
+    <div class="box"><div class="box-val green">R$ ${totalFinal.toFixed(2)}</div><div>Total Arrecadado</div></div>
+  </div>
+
+  <h2 class="verde">✅ Pagaram — ${pagos.length} jogador(es)</h2>
+  ${pagos.length > 0 ? `
+  <table>
+    <tr><th>#</th><th>Jogador</th><th>Valor</th></tr>
+    ${pagos.map((p,i) => `<tr><td>${i+1}</td><td>${esc(p.nome)}</td><td>R$ ${(finData.mensalidade||25).toFixed(2)}</td></tr>`).join('')}
+  </table>` : `<div class="empty">Nenhum pagamento registrado.</div>`}
+
+  <h2 class="vermelho">⏳ Pendentes este mês — ${soPendenteSemAtraso.length} jogador(es)</h2>
+  ${soPendenteSemAtraso.length > 0 ? `
+  <table>
+    <tr><th>#</th><th>Jogador</th></tr>
+    ${soPendenteSemAtraso.map((p,i) => `<tr><td>${i+1}</td><td>${esc(p.nome)}</td></tr>`).join('')}
+  </table>` : `<div class="empty">Nenhum jogador apenas pendente.</div>`}
+
+  <h2 class="laranja">⚠️ Em Atraso (2+ meses) — ${emAtraso.length} jogador(es)</h2>
+  ${emAtraso.length > 0 ? `
+  <table>
+    <tr><th>#</th><th>Jogador</th><th>Meses em atraso</th></tr>
+    ${emAtraso.map(({p,atraso},i) => `<tr><td>${i+1}</td><td>${esc(p.nome)}</td><td style="color:#b34d00;font-weight:700">${atraso} ${atraso===1?'mês':'meses'}</td></tr>`).join('')}
+  </table>` : `<div class="empty">✅ Nenhum jogador em atraso!</div>`}
+
+  ${ajustes.length > 0 ? `
+  <h2 style="margin-top:22px;font-size:1rem;padding:6px 12px;border-radius:6px;background:#fffbe6;color:#7a5a00;border-left:4px solid #f4c430">🔧 Ajustes de Saldo</h2>
+  ${ajustes.map(a => `<div class="ajuste-item"><span>${esc(a.desc)}</span><span style="font-weight:700;color:${a.valor>=0?'#1a7a3a':'#cc0000'}">${a.valor>=0?'+':''}R$ ${a.valor.toFixed(2)}</span></div>`).join('')}
+  <div style="text-align:right;padding:6px 12px;font-size:0.85rem;font-weight:700">
+    Total com ajustes: R$ ${totalFinal.toFixed(2)}
+  </div>` : ''}
+
+  <div class="footer">Controle de Pelada KF · ${nomeMes} ${ano} · Relatório de Mensalidades</div>
+  </body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// ─── DESPESAS / ENTRADAS TOGGLE ────────────────────────────────────────────
+let despView = 'despesas';
+function setDespView(v) {
+  despView = v;
+  const btnD = document.getElementById('btn-desp-desp');
+  const btnE = document.getElementById('btn-desp-entrada');
+  const painelD = document.getElementById('desp-painel');
+  const painelE = document.getElementById('entrada-painel');
+  if (!btnD) return;
+  btnD.style.background  = v === 'despesas' ? 'var(--red)'      : 'var(--surface2)';
+  btnD.style.color        = v === 'despesas' ? '#fff'            : 'var(--text-muted)';
+  btnD.style.borderColor  = v === 'despesas' ? 'var(--red)'      : 'var(--border)';
+  btnE.style.background  = v === 'entradas' ? 'var(--green)'     : 'var(--surface2)';
+  btnE.style.color        = v === 'entradas' ? '#000'            : 'var(--text-muted)';
+  btnE.style.borderColor  = v === 'entradas' ? 'var(--green)'    : 'var(--border)';
+  painelD.style.display = v === 'despesas' ? 'block' : 'none';
+  painelE.style.display = v === 'entradas' ? 'block' : 'none';
+}
+
+// ─── ENTRADAS AVULSAS ──────────────────────────────────────────────────────
+async function addEntrada() {
+  const anoInput = parseInt(document.getElementById('input-entrada-ano').value);
+  const mesInput = document.getElementById('sel-mes-entrada').value;
+  const desc = document.getElementById('input-entrada-desc').value.trim();
+  const val  = parseFloat(document.getElementById('input-entrada-val').value);
+  if (isNaN(anoInput) || anoInput < 2020) { toast('Informe um ano válido!'); return; }
+  if (!mesInput) { toast('Selecione o mês!'); return; }
+  if (!desc) { toast('Informe a descrição!'); return; }
+  if (isNaN(val) || val <= 0) { toast('Informe um valor válido!'); return; }
+  const key = anoInput + '-' + mesInput;
+  if (!finData.entradas) finData.entradas = {};
+  if (!finData.entradas[key]) finData.entradas[key] = [];
+  finData.entradas[key].push({ id: Date.now(), desc, valor: val });
+  await saveFinData();
+  document.getElementById('input-entrada-desc').value = '';
+  document.getElementById('input-entrada-val').value = '';
+  document.getElementById('input-entrada-view-ano').value = anoInput;
+  document.getElementById('sel-mes-entrada-view').value = mesInput;
+  renderEntradas();
+  // Sincroniza campos do Resumo para garantir que a re-renderização use o mesmo mês/ano do lançamento
+  const inputResAno  = document.getElementById('input-resumo-ano');
+  const selResMes    = document.getElementById('sel-mes-resumo');
+  const inputResAnoG = document.getElementById('input-resumo-ano-geral');
+  if (inputResAno)  inputResAno.value  = anoInput;
+  if (selResMes)    selResMes.value    = mesInput;
+  if (inputResAnoG) inputResAnoG.value = anoInput;
+  renderResumo();
+  renderResumoGeral();
+  toast('💚 Entrada registrada!');
+}
+
+async function delEntrada(key, id) {
+  if (!finData.entradas || !finData.entradas[key]) return;
+  finData.entradas[key] = finData.entradas[key].filter(d => d.id !== id);
+  await saveFinData();
+  renderEntradas();
+  renderResumo();
+  renderResumoGeral();
+  toast('Entrada removida.');
+}
+
+function renderEntradas() {
+  const anoFiltro = parseInt(document.getElementById('input-entrada-view-ano')?.value) || 0;
+  const mesFiltro = document.getElementById('sel-mes-entrada-view')?.value || '';
+  const list     = document.getElementById('entrada-list');
+  const totalEl  = document.getElementById('entrada-total');
+  if (!list) return;
+  if (!finData.entradas) finData.entradas = {};
+
+  let chavesFiltradas = Object.keys(finData.entradas).filter(key => {
+    const [a, m] = key.split('-');
+    const aBate = !anoFiltro || parseInt(a) === anoFiltro;
+    const mBate = !mesFiltro || m === mesFiltro;
+    return aBate && mBate;
+  }).sort();
+
+  if (chavesFiltradas.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.85rem">Nenhuma entrada encontrada.</div>`;
+    totalEl.textContent = '';
+    return;
+  }
+
+  let total = 0;
+  let html = '';
+  chavesFiltradas.forEach(key => {
+    const [a, m] = key.split('-');
+    const nomeMes = NOMES_MESES[parseInt(m)-1];
+    const entradas = finData.entradas[key] || [];
+    if (entradas.length === 0) return;
+    html += `<div style="font-size:0.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px">${nomeMes} ${a}</div>`;
+    entradas.forEach(e => {
+      total += e.valor;
+      html += `
+        <div class="entrada-item">
+          <div style="font-size:1rem;flex-shrink:0">💚</div>
+          <div class="entrada-desc">${esc(e.desc)}</div>
+          <div class="entrada-val">+R$ ${e.valor.toFixed(2)}</div>
+          <button class="entrada-del" onclick="delEntrada('${key}', ${e.id})">✕</button>
+        </div>`;
+    });
+  });
+
+  list.innerHTML = html || `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.85rem">Nenhuma entrada encontrada.</div>`;
+  totalEl.textContent = total > 0 ? `Total: +R$ ${total.toFixed(2)}` : '';
+}
+
+// ─── ZERAR LANÇAMENTOS ────────────────────────────────────────────────────
+async function zerarLancamentos() {
+  if (!confirm('⚠️ ATENÇÃO!\n\nIsso vai apagar TODOS os lançamentos:\n• Mensalidades pagas\n• Despesas\n• Entradas avulsas\n\nOs jogadores cadastrados serão mantidos.\n\nTem certeza?')) return;
+  if (!confirm('Confirme novamente: deseja ZERAR todos os lançamentos financeiros?')) return;
+  finData.pagamentos = {};
+  finData.despesas   = {};
+  finData.entradas   = {};
+  finData.ajustes    = {};
+  finData.presencas  = {};
+  await saveFinData();
+  initFinanceiro();
+  toast('🗑️ Todos os lançamentos foram zerados!');
+}
+
+// ─── IMPRESSÃO / PDF ──────────────────────────────────────────────────────
+function imprimirRelatorioMensal() {
+  const anoFiltro = parseInt(document.getElementById('input-resumo-ano')?.value) || anoSistema();
+  const mesFiltro = document.getElementById('sel-mes-resumo')?.value || String(mesSistema()).padStart(2,'0');
+  const key = anoFiltro + '-' + mesFiltro;
+  const nomeMes = NOMES_MESES[parseInt(mesFiltro)-1];
+
+  const ativos = players.filter(p => p.ativo !== false);
+  const pag = finData.pagamentos[key] || {};
+  const entradas = (finData.entradas || {})[key] || [];
+  const despesas = (finData.despesas || {})[key] || [];
+
+  const pagos    = ativos.filter(p => !!pag[p.id]);
+  const pendentes = ativos.filter(p => !pag[p.id]);
+  const recMens  = pagos.length * (finData.mensalidade || 25);
+  const recExtra = entradas.reduce((s, e) => s + e.valor, 0);
+  const despTotal = despesas.reduce((s, d) => s + d.valor, 0);
+  const ajustes  = (finData.ajustes || {})[key] || [];
+  const ajusteTotal = ajustes.reduce((s, a) => s + a.valor, 0);
+  const saldo = recMens + recExtra + ajusteTotal - despTotal;
+
+  // Presenças do mês
+  const presencasMes = (finData.presencas || {})[key] || {};
+  const totalPeladas = players.filter(p => p.ativo !== false).length > 0
+    ? Math.max(0, ...players.filter(p => p.ativo !== false).map(p => presencasMes[p.id] || 0))
+    : 0;
+  const presRanking = ativos
+    .map(p => ({ nome: p.nome, n: presencasMes[p.id] || 0 }))
+    .filter(x => x.n > 0)
+    .sort((a,b) => b.n - a.n);
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Relatório ${nomeMes} ${anoFiltro}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #111; font-size: 14px; }
+    h1 { color: #1a7a3a; border-bottom: 2px solid #1a7a3a; padding-bottom: 8px; }
+    h2 { color: #145228; margin-top: 20px; font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #145228; color: #fff; padding: 7px 10px; text-align: left; font-size: 0.85rem; }
+    td { padding: 6px 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+    tr:nth-child(even) td { background: #f5f5f5; }
+    .resumo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+    .box { border: 1px solid #ccc; border-radius: 8px; padding: 10px; text-align: center; }
+    .box-val { font-size: 1.3rem; font-weight: 900; }
+    .green { color: #1a7a3a; } .red { color: #cc0000; } .blue { color: #1a3a8a; }
+    .footer { margin-top: 30px; font-size: 0.75rem; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+  </style></head><body>
+  <h1>⚽ Controle de Pelada KF — ${nomeMes} ${anoFiltro}</h1>
+  <p style="color:#555;margin-bottom:16px">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+
+  <div class="resumo">
+    <div class="box"><div class="box-val green">R$ ${recMens.toFixed(2)}</div><div>Mensalidades</div></div>
+    <div class="box"><div class="box-val green">R$ ${recExtra.toFixed(2)}</div><div>Entradas Avulsas</div></div>
+    ${ajusteTotal !== 0 ? `<div class="box"><div class="box-val ${ajusteTotal >= 0 ? 'green' : 'red'}">${ajusteTotal >= 0 ? '+' : ''}R$ ${ajusteTotal.toFixed(2)}</div><div>Ajustes</div></div>` : ''}
+    <div class="box"><div class="box-val red">R$ ${despTotal.toFixed(2)}</div><div>Despesas</div></div>
+    <div class="box" style="grid-column:1/-1"><div class="box-val ${saldo >= 0 ? 'green' : 'red'}">R$ ${saldo.toFixed(2)}</div><div>Saldo</div></div>
+  </div>
+
+  <h2>✅ Mensalidades Pagas (${pagos.length})</h2>
+  <table><tr><th>#</th><th>Jogador</th><th>Valor</th></tr>
+  ${pagos.map((p,i) => `<tr><td>${i+1}</td><td>${esc(p.nome)}</td><td>R$ ${(finData.mensalidade||25).toFixed(2)}</td></tr>`).join('')}
+  ${pagos.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:#888">Nenhum</td></tr>' : ''}
+  </table>
+
+  <h2>⏳ Pendentes (${pendentes.length})</h2>
+  <table><tr><th>#</th><th>Jogador</th></tr>
+  ${pendentes.map((p,i) => `<tr><td>${i+1}</td><td>${esc(p.nome)}</td></tr>`).join('')}
+  ${pendentes.length === 0 ? '<tr><td colspan="2" style="text-align:center;color:#888">Nenhum</td></tr>' : ''}
+  </table>
+
+  ${entradas.length > 0 ? `
+  <h2>💚 Entradas Avulsas</h2>
+  <table><tr><th>#</th><th>Descrição</th><th>Valor</th></tr>
+  ${entradas.map((e,i) => `<tr><td>${i+1}</td><td>${esc(e.desc)}</td><td>+R$ ${e.valor.toFixed(2)}</td></tr>`).join('')}
+  </table>` : ''}
+
+  ${despesas.length > 0 ? `
+  <h2>🧾 Despesas</h2>
+  <table><tr><th>#</th><th>Descrição</th><th>Valor</th></tr>
+  ${despesas.map((d,i) => `<tr><td>${i+1}</td><td>${esc(d.desc)}</td><td>-R$ ${d.valor.toFixed(2)}</td></tr>`).join('')}
+  </table>` : ''}
+
+  ${ajustes.length > 0 ? `
+  <h2>🔧 Ajustes de Saldo</h2>
+  <table><tr><th>#</th><th>Descrição</th><th>Valor</th></tr>
+  ${ajustes.map((a,i) => `<tr><td>${i+1}</td><td>${esc(a.desc)}</td><td style="color:${a.valor>=0?'#1a7a3a':'#cc0000'};font-weight:700">${a.valor>=0?'+':''}R$ ${a.valor.toFixed(2)}</td></tr>`).join('')}
+  </table>` : ''}
+
+  ${totalPeladas > 0 ? `
+  <h2>⚽ Presenças — ${totalPeladas} pelada(s) em ${nomeMes} ${anoFiltro}</h2>
+  <table>
+    <tr><th>#</th><th>Jogador</th><th>Presenças</th><th>% Presença</th></tr>
+    ${presRanking.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.nome)}</td><td style="text-align:center;font-weight:700">${r.n}</td><td style="text-align:center;color:${r.n===totalPeladas?'#1a7a3a':'#555'}">${totalPeladas > 0 ? Math.round((r.n/totalPeladas)*100) : 0}%</td></tr>`).join('')}
+  </table>` : ''}
+
+  <div class="footer">Controle de Pelada KF · Relatório gerado automaticamente</div>
+  </body></html>`);
+  win.document.close();
+  win.print();
+}
+
+function imprimirRelatorioAnual() {
+  const anoFiltro = parseInt(document.getElementById('input-resumo-ano-geral')?.value) || anoSistema();
+  const ativos = players.filter(p => p.ativo !== false);
+  if (!finData.entradas) finData.entradas = {};
+
+  let recMensTotal = 0, recExtraTotal = 0, despTotalGeral = 0, ajusteTotalGeral = 0;
+  const mesesData = NOMES_MESES.map((nomeMes, idx) => {
+    const m = String(idx + 1).padStart(2, '0');
+    const key = `${anoFiltro}-${m}`;
+    const pag = finData.pagamentos[key] || {};
+    const entradas = (finData.entradas[key] || []);
+    const despesas = (finData.despesas[key] || []);
+    const ajustesList = ((finData.ajustes || {})[key] || []);
+    const pagos = ativos.filter(p => !!pag[p.id]);
+    const pendentes = ativos.filter(p => !pag[p.id]);
+    const recMens = pagos.length * (finData.mensalidade || 25);
+    const recExtra = entradas.reduce((s, e) => s + e.valor, 0);
+    const desp = despesas.reduce((s, d) => s + d.valor, 0);
+    const ajuste = ajustesList.reduce((s, a) => s + a.valor, 0);
+    recMensTotal += recMens; recExtraTotal += recExtra; despTotalGeral += desp; ajusteTotalGeral += ajuste;
+    return { nomeMes, key, pagos, pendentes, recMens, recExtra, desp, ajuste, saldo: recMens + recExtra + ajuste - desp, entradas, despesas };
+  });
+
+  const saldoFinal = recMensTotal + recExtraTotal + ajusteTotalGeral - despTotalGeral;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Relatório Anual ${anoFiltro}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #111; font-size: 13px; }
+    h1 { color: #1a7a3a; border-bottom: 2px solid #1a7a3a; padding-bottom: 8px; }
+    h2 { color: #145228; margin-top: 24px; font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #145228; color: #fff; padding: 7px 10px; text-align: left; font-size: 0.85rem; }
+    td { padding: 6px 10px; border-bottom: 1px solid #eee; font-size: 0.82rem; }
+    tr:nth-child(even) td { background: #f5f5f5; }
+    .resumo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+    .box { border: 1px solid #ccc; border-radius: 8px; padding: 10px; text-align: center; }
+    .box-val { font-size: 1.2rem; font-weight: 900; }
+    .green { color: #1a7a3a; } .red { color: #cc0000; }
+    .footer { margin-top: 30px; font-size: 0.75rem; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+    @media print { .no-print { display:none; } }
+  </style></head><body>
+  <h1>⚽ Controle de Pelada KF — Relatório Anual ${anoFiltro}</h1>
+  <p style="color:#555;margin-bottom:16px">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+
+  <div class="resumo">
+    <div class="box"><div class="box-val green">R$ ${recMensTotal.toFixed(2)}</div><div>Total Mensalidades</div></div>
+    <div class="box"><div class="box-val green">R$ ${recExtraTotal.toFixed(2)}</div><div>Total Entradas Avulsas</div></div>
+    <div class="box"><div class="box-val red">R$ ${despTotalGeral.toFixed(2)}</div><div>Total Despesas</div></div>
+    <div class="box"><div class="box-val ${saldoFinal >= 0 ? 'green' : 'red'}">R$ ${saldoFinal.toFixed(2)}</div><div>Saldo do Ano</div></div>
+  </div>
+
+  <h2>📅 Resumo por Mês</h2>
+  <table>
+    <tr><th>Mês</th><th>Mensalidades (R$)</th><th>Entradas Avulsas (R$)</th><th>Despesas (R$)</th><th>Saldo (R$)</th><th>Pagos / Total</th></tr>
+    ${mesesData.map(d => `<tr>
+      <td><strong>${d.nomeMes}</strong></td>
+      <td class="green">${d.recMens > 0 ? d.recMens.toFixed(2) : '-'}</td>
+      <td class="green">${d.recExtra > 0 ? '+' + d.recExtra.toFixed(2) : '-'}</td>
+      <td style="color:#cc0000">${d.desp > 0 ? d.desp.toFixed(2) : '-'}</td>
+      <td style="color:${d.saldo >= 0 ? '#1a7a3a' : '#cc0000'};font-weight:700">${(d.recMens + d.recExtra + d.desp) > 0 ? d.saldo.toFixed(2) : '-'}</td>
+      <td>${d.pagos.length}/${ativos.length}</td>
+    </tr>`).join('')}
+  </table>
+
+  <h2>👥 Situação por Jogador — ${anoFiltro}</h2>
+  <table>
+    <tr><th>Jogador</th>${NOMES_MESES.map(m => `<th>${m.slice(0,3)}</th>`).join('')}<th>Total Pago</th></tr>
+    ${ativos.sort((a,b) => a.nome.localeCompare(b.nome)).map(p => {
+      let total = 0;
+      const cells = NOMES_MESES.map((nm, idx) => {
+        const m = String(idx+1).padStart(2,'0');
+        const key = `${anoFiltro}-${m}`;
+        const inicioInt = p.mesInicio ? keyToInt(p.mesInicio) : 0;
+        const kInt = keyToInt(key);
+        if (inicioInt > 0 && kInt < inicioInt) return `<td style="color:#ccc;text-align:center">-</td>`;
+        const paid = !!((finData.pagamentos[key] || {})[p.id]);
+        if (paid) total += (finData.mensalidade || 25);
+        return `<td style="text-align:center;color:${paid ? '#1a7a3a' : '#cc0000'};font-weight:700">${paid ? '✓' : '·'}</td>`;
+      }).join('');
+      return `<tr><td><strong>${esc(p.nome)}</strong></td>${cells}<td style="color:#1a7a3a;font-weight:900">R$ ${total.toFixed(2)}</td></tr>`;
+    }).join('')}
+  </table>
+
+  <div class="footer">Controle de Pelada KF · Relatório Anual ${anoFiltro} · Gerado automaticamente</div>
+  </body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// ─── PRESENÇA MENSAL ──────────────────────────────────────────────────────
+let presView = 'hoje';
+
+function setPresView(v) {
+  presView = v;
+  const btnH = document.getElementById('btn-pres-hoje');
+  const btnM = document.getElementById('btn-pres-mes');
+  const painelH = document.getElementById('pres-painel-hoje');
+  const painelM = document.getElementById('pres-painel-mes');
+  if (!btnH) return;
+  btnH.style.background  = v === 'hoje' ? 'var(--green)'   : 'var(--surface2)';
+  btnH.style.color        = v === 'hoje' ? '#000'           : 'var(--text-muted)';
+  btnH.style.borderColor  = v === 'hoje' ? 'var(--green)'   : 'var(--border)';
+  btnM.style.background  = v === 'mes'  ? 'var(--gold)'    : 'var(--surface2)';
+  btnM.style.color        = v === 'mes'  ? '#000'           : 'var(--text-muted)';
+  btnM.style.borderColor  = v === 'mes'  ? 'var(--gold)'    : 'var(--border)';
+  painelH.style.display = v === 'hoje' ? 'block' : 'none';
+  painelM.style.display = v === 'mes'  ? 'block' : 'none';
+  if (v === 'mes') renderPresencaMes();
+}
+
+function initPresencaMes() {
+  if (!finData.presencas) finData.presencas = {};
+  const selMes = document.getElementById('sel-pres-mes');
+  const inputAno = document.getElementById('input-pres-ano');
+  if (selMes)   selMes.value   = String(mesSistema()).padStart(2,'0');
+  if (inputAno) inputAno.value = anoSistema();
+}
+
+// Confirma a pelada de hoje: soma +1 para cada presente no mês/ano atual
+async function confirmarPelada() {
+  const ativos = players.filter(p => p.ativo !== false && p.presente);
+  if (ativos.length === 0) { toast('Marque os presentes primeiro!'); return; }
+  if (!confirm(`Confirmar presença de ${ativos.length} jogador(es) na pelada de hoje?\n\nIsso vai somar +1 na contagem do mês atual para cada jogador marcado.`)) return;
+  if (!finData.presencas) finData.presencas = {};
+  const key = mesKey(anoSistema(), mesSistema());
+  if (!finData.presencas[key]) finData.presencas[key] = {};
+  ativos.forEach(p => {
+    finData.presencas[key][p.id] = (finData.presencas[key][p.id] || 0) + 1;
+  });
+  await saveFinData();
+  toast(`⚽ ${ativos.length} presença(s) confirmada(s)!`);
+  // Atualiza view mensal se estiver visível
+  renderPresencaMes();
+}
+
+function renderPresencaMes() {
+  if (!finData.presencas) finData.presencas = {};
+  const mes = document.getElementById('sel-pres-mes')?.value || String(mesSistema()).padStart(2,'0');
+  const ano = parseInt(document.getElementById('input-pres-ano')?.value) || anoSistema();
+  const key = ano + '-' + mes;
+  const nomeMes = NOMES_MESES[parseInt(mes)-1];
+  const ativos = players.filter(p => p.ativo !== false);
+  const pres = finData.presencas[key] || {};
+
+  // Total de peladas neste mês = máximo de presenças de qualquer jogador
+  const totalPeladas = ativos.length > 0
+    ? Math.max(0, ...ativos.map(p => pres[p.id] || 0))
+    : 0;
+
+  const totalEl = document.getElementById('pres-mes-total');
+  if (totalEl) totalEl.textContent = `⚽ ${totalPeladas} pelada(s) em ${nomeMes} ${ano}`;
+
+  // Lista com +/- por jogador
+  const list = document.getElementById('pres-mes-list');
+  if (!list) return;
+  if (ativos.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">Cadastre jogadores primeiro!</div></div>`;
+  } else {
+    const sorted = [...ativos].sort((a,b) => (pres[b.id]||0) - (pres[a.id]||0) || a.nome.localeCompare(b.nome));
+    list.innerHTML = sorted.map(p => {
+      const n = pres[p.id] || 0;
+      const pct = totalPeladas > 0 ? Math.round((n / totalPeladas) * 100) : 0;
+      return `
+        <div class="pres-item">
+          <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:0.9rem">${esc(p.nome)}</div>
+            <div style="font-size:0.65rem;color:var(--text-muted)">${pct}% de presença</div>
+          </div>
+          <div class="pres-counter">
+            <button class="pres-btn pres-btn-minus" onclick="alterarPresenca('${key}',${p.id},-1)">−</button>
+            <div class="pres-num">${n}</div>
+            <button class="pres-btn pres-btn-plus"  onclick="alterarPresenca('${key}',${p.id},+1)">+</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  renderPresRanking();
+  renderPresHistorico();
+}
+
+async function alterarPresenca(key, playerId, delta) {
+  if (!finData.presencas) finData.presencas = {};
+  if (!finData.presencas[key]) finData.presencas[key] = {};
+  const atual = finData.presencas[key][playerId] || 0;
+  const novo = Math.max(0, atual + delta);
+  if (novo === 0) delete finData.presencas[key][playerId];
+  else finData.presencas[key][playerId] = novo;
+  await saveFinData();
+  renderPresencaMes();
+}
+
+function renderPresRanking() {
+  if (!finData.presencas) return;
+  const el = document.getElementById('pres-ranking-list');
+  if (!el) return;
+  const ativos = players.filter(p => p.ativo !== false);
+  if (ativos.length === 0) {
+    el.innerHTML = `<div style="font-size:0.85rem;color:var(--text-muted);text-align:center;padding:12px">Nenhum jogador ativo.</div>`;
+    return;
+  }
+
+  // Soma total de presenças por jogador em todos os meses
+  const totais = {};
+  Object.values(finData.presencas).forEach(mes => {
+    Object.entries(mes).forEach(([pid, n]) => {
+      totais[pid] = (totais[pid] || 0) + n;
+    });
+  });
+
+  const ranking = ativos
+    .map(p => ({ p, total: totais[p.id] || 0 }))
+    .sort((a,b) => b.total - a.total || a.p.nome.localeCompare(b.p.nome));
+
+  const maxTotal = ranking[0]?.total || 1;
+
+  const medalhas = ['gold','silver','bronze'];
+  el.innerHTML = ranking.map(({p, total}, i) => {
+    const pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+    const posClass = i < 3 ? medalhas[i] : '';
+    const posLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}°`;
+    return `
+      <div class="rank-item">
+        <div class="rank-pos ${posClass}">${posLabel}</div>
+        <div class="nivel-badge n${p.nivel}">${p.nivel}</div>
+        <div class="rank-bar-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-weight:700;font-size:0.88rem">${esc(p.nome)}</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--gold)">${total}</span>
+          </div>
+          <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderPresHistorico() {
+  if (!finData.presencas) return;
+  const el = document.getElementById('pres-historico-list');
+  if (!el) return;
+  const chaves = Object.keys(finData.presencas)
+    .filter(k => Object.keys(finData.presencas[k]).length > 0)
+    .sort().reverse();
+
+  if (chaves.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">Nenhum registro ainda.</div></div>`;
+    return;
+  }
+
+  const ativos = players.filter(p => p.ativo !== false);
+  el.innerHTML = chaves.map(key => {
+    const [a, m] = key.split('-');
+    const nomeMes = NOMES_MESES[parseInt(m)-1];
+    const pres = finData.presencas[key];
+    const totalPeladas = Math.max(0, ...Object.values(pres));
+    const totalPresencas = Object.values(pres).reduce((s,n) => s+n, 0);
+    const top = ativos
+      .filter(p => pres[p.id] > 0)
+      .sort((a,b) => (pres[b.id]||0) - (pres[a.id]||0))
+      .slice(0,3)
+      .map(p => `<span style="font-size:0.7rem;background:var(--surface);border:1px solid var(--border);padding:2px 7px;border-radius:20px;color:var(--green)">${esc(p.nome)} (${pres[p.id]})</span>`)
+      .join(' ');
+    return `
+      <div class="month-history-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+          <div style="font-weight:700;font-size:0.9rem">${nomeMes} ${a}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--gold)">${totalPeladas} pelada(s)</div>
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted)">${totalPresencas} presença(s) registrada(s)</div>
+        ${top ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${top}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ─── RELATÓRIO PDF PRESENÇAS ─────────────────────────────────────────────
+function imprimirRelatorioPresencas() {
+  if (!finData.presencas) finData.presencas = {};
+  const mes = document.getElementById('sel-pres-mes')?.value || String(mesSistema()).padStart(2,'0');
+  const ano = parseInt(document.getElementById('input-pres-ano')?.value) || anoSistema();
+  const key = ano + '-' + mes;
+  const nomeMes = NOMES_MESES[parseInt(mes)-1];
+  const ativos = players.filter(p => p.ativo !== false);
+  const pres = finData.presencas[key] || {};
+
+  const totalPeladas = ativos.length > 0
+    ? Math.max(0, ...ativos.map(p => pres[p.id] || 0)) : 0;
+
+  const ranking = [...ativos]
+    .map(p => ({ nome: p.nome, nivel: p.nivel, n: pres[p.id] || 0 }))
+    .sort((a,b) => b.n - a.n || a.nome.localeCompare(b.nome));
+
+  const totalPresencas = ranking.reduce((s, r) => s + r.n, 0);
+  const sempres = ranking.filter(r => r.n === totalPeladas && totalPeladas > 0);
+  const ausentes = ranking.filter(r => r.n === 0);
+
+  // Ranking acumulado geral
+  const totaisGeral = {};
+  Object.values(finData.presencas).forEach(m => {
+    Object.entries(m).forEach(([pid, n]) => { totaisGeral[pid] = (totaisGeral[pid] || 0) + n; });
+  });
+  const rankingGeral = [...ativos]
+    .map(p => ({ nome: p.nome, total: totaisGeral[p.id] || 0 }))
+    .sort((a,b) => b.total - a.total)
+    .filter(r => r.total > 0)
+    .slice(0, 10);
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Presenças ${nomeMes} ${ano}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #111; font-size: 14px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #1a7a3a; border-bottom: 3px solid #1a7a3a; padding-bottom: 10px; margin-bottom: 6px; }
+    .sub { color: #555; font-size: 0.85rem; margin-bottom: 20px; }
+    h2 { margin-top: 22px; font-size: 1rem; padding: 6px 12px; border-radius: 6px; }
+    h2.verde  { background: #e6f7ee; color: #1a7a3a; border-left: 4px solid #1a7a3a; }
+    h2.azul   { background: #e8f0ff; color: #1a3a8a; border-left: 4px solid #3b82f6; }
+    h2.cinza  { background: #f5f5f5; color: #555;    border-left: 4px solid #aaa; }
+    .resumo { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 18px 0; }
+    .box { border: 1px solid #ccc; border-radius: 8px; padding: 12px; text-align: center; }
+    .box-val { font-size: 1.5rem; font-weight: 900; }
+    .green { color: #1a7a3a; } .red { color: #cc0000; } .gold { color: #b8860b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 4px; }
+    th { background: #145228; color: #fff; padding: 8px 12px; text-align: left; font-size: 0.85rem; }
+    td { padding: 7px 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .bar-wrap { background: #e8e8e8; border-radius: 4px; height: 8px; overflow: hidden; margin-top: 3px; }
+    .bar-fill { height: 100%; background: #1a7a3a; border-radius: 4px; }
+    .medal { font-size: 1rem; }
+    .empty { color: #aaa; font-style: italic; padding: 8px 12px; font-size: 0.85rem; }
+    .footer { margin-top: 30px; font-size: 0.75rem; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+  </style></head><body>
+  <h1>⚽ Controle de Pelada KF — Presenças ${nomeMes} ${ano}</h1>
+  <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+
+  <div class="resumo">
+    <div class="box"><div class="box-val green">${totalPeladas}</div><div>Peladas no mês</div></div>
+    <div class="box"><div class="box-val green">${totalPresencas}</div><div>Presenças totais</div></div>
+    <div class="box"><div class="box-val green">${ativos.length > 0 ? (totalPresencas / ativos.length).toFixed(1) : 0}</div><div>Média por jogador</div></div>
+  </div>
+
+  <h2 class="verde">📋 Presenças por Jogador — ${nomeMes} ${ano}</h2>
+  ${ranking.length > 0 ? `
+  <table>
+    <tr><th>#</th><th>Jogador</th><th>Presenças</th><th>% Presença</th><th>Gráfico</th></tr>
+    ${ranking.map((r, i) => {
+      const pct = totalPeladas > 0 ? Math.round((r.n / totalPeladas) * 100) : 0;
+      const medal = i === 0 && r.n > 0 ? '🥇 ' : i === 1 && r.n > 0 ? '🥈 ' : i === 2 && r.n > 0 ? '🥉 ' : '';
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${medal}${esc(r.nome)}</td>
+        <td style="text-align:center;font-weight:700;color:${r.n>0?'#1a7a3a':'#aaa'}">${r.n}</td>
+        <td style="text-align:center;color:${pct===100?'#1a7a3a':pct===0?'#aaa':'#555'}">${pct}%</td>
+        <td style="width:120px"><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div></td>
+      </tr>`;
+    }).join('')}
+  </table>` : `<div class="empty">Nenhuma presença registrada este mês.</div>`}
+
+  ${sempres.length > 0 ? `
+  <h2 class="verde">🌟 Presença 100% — ${sempres.length} jogador(es)</h2>
+  <p style="font-size:0.85rem;color:#555;padding:4px 0">${sempres.map(r => esc(r.nome)).join(', ')}</p>` : ''}
+
+  ${ausentes.length > 0 ? `
+  <h2 class="cinza">😴 Não foram este mês — ${ausentes.length} jogador(es)</h2>
+  <p style="font-size:0.85rem;color:#aaa;padding:4px 0">${ausentes.map(r => esc(r.nome)).join(', ')}</p>` : ''}
+
+  ${rankingGeral.length > 0 ? `
+  <h2 class="azul">🏆 Ranking Geral Acumulado (Top 10)</h2>
+  <table>
+    <tr><th>#</th><th>Jogador</th><th>Total de Presenças</th></tr>
+    ${rankingGeral.map((r, i) => `<tr>
+      <td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+      <td>${esc(r.nome)}</td>
+      <td style="text-align:center;font-weight:700;color:#1a7a3a">${r.total}</td>
+    </tr>`).join('')}
+  </table>` : ''}
+
+  <div class="footer">Controle de Pelada KF · Relatório de Presenças · ${nomeMes} ${ano}</div>
+  </body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// ─── AUTH STATE HANDLER ───────────────────────────────────────────────────
+window._onAuthChange = async function(user) {
+  const loginScreen = document.getElementById('login-screen');
+  const loading     = document.getElementById('loading');
+  const userBar     = document.getElementById('user-info-bar');
+  const userLabel   = document.getElementById('user-email-label');
+
+  if (user) {
+    // Usuário logado
+    _currentUid = user.uid;
+    loginScreen.classList.add('hidden');
+    loading.classList.remove('hidden');
+    userBar.style.display = 'flex';
+    userLabel.textContent = user.email;
+
+    await loadData();
+    await loadFinData();
+    selectNivel(3);
+    setPlayerView('ativos');
+    const mesRefEl = document.getElementById('input-mes-ref');
+    const anoRefEl = document.getElementById('input-ano-ref');
+    if (mesRefEl) mesRefEl.value = String(mesSistema()).padStart(2,'0');
+    if (anoRefEl) anoRefEl.value = anoSistema();
+    renderPlayers();
+    loading.classList.add('hidden');
+  } else {
+    // Deslogado
+    _currentUid = null;
+    players = [];
+    finData = { mensalidade: 25, ano: new Date().getFullYear(), pagamentos: {}, despesas: {}, entradas: {}, ajustes: {}, presencas: {} };
+    loginScreen.classList.remove('hidden');
+    loading.classList.add('hidden');
+    userBar.style.display = 'none';
+    // Limpa campos de login
+    document.getElementById('login-error').textContent = '';
+  }
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+// A inicialização agora é disparada pelo onAuthStateChanged do Firebase
+// (definido no módulo ES6 no <head>), que chama window._onAuthChange
+</script>
+</body>
+</html>
