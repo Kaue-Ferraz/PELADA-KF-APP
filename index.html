@@ -579,13 +579,14 @@ onAuthStateChanged(auth, user => {
 <div class="page" id="page-times">
   <div class="card">
     <div class="card-title">🎲 Sortear Times</div>
-    <div style="position:fixed;top:10px;right:10px;background:#302f2f;padding:8px 10px;border:1px solid #ccc;border-radius:8px;z-index:9999;font-size:14px">
-Jogadores por time:
-<input id="jogadoresPorTime" type="number" value="6" min="3" max="11" style="width:60px">
-</div>
+    
     <div id="sort-info" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
       Marque os presentes e sorteie!
     </div>
+    <div style="top:10px;right:10px;background:#302f2f;padding:8px 10px;border:1px solid #039c36;border-radius:8px;z-index:9999;font-size:14px">
+Jogadores por time:
+<input id="jogadoresPorTime" type="number" value="6" min="3" max="11" style="width:60px">
+</div>
     <button class="btn btn-gold" onclick="sortearTimes()">⚡ SORTEAR AGORA</button>
     <div style="margin-top:8px">
       <button class="btn btn-outline" onclick="sortearTimes()">🔄 Ressortear</button>
