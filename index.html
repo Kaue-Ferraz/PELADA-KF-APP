@@ -1379,7 +1379,7 @@ async function selectAll(val) {
 }
 
 // ─── SORT INFO ────────────────────────────────────────────────────────────
-function updateSortInfo() {
+/* function updateSortInfo() {
   const presentes = players.filter(p => p.ativo !== false && p.presente);
   const el = document.getElementById('sort-info');
   if (!el) return;
@@ -1389,6 +1389,39 @@ function updateSortInfo() {
     const times = Math.floor(presentes.length / 6);
     const resto = presentes.length % 6;
     el.innerHTML = `<strong style="color:var(--green)">${presentes.length} presentes</strong> · ${times > 0 ? times + ' time(s) de 6' : '<span style="color:var(--red)">mínimo 6 para sortear</span>'}${resto > 0 ? (times > 0 ? ' + ' : '') + resto + ' reserva(s)' : ''}`;
+  }
+} */
+
+// ─── SORT INFO ────────────────────────────────────────────────────────────
+function updateSortInfo() {
+  const presentes = players.filter(p => p.ativo !== false && p.presente);
+  const el = document.getElementById('sort-info');
+  const jogadoresPorTime = parseInt(document.getElementById('jogadoresPorTime')?.value) || 6;
+
+  if (!el) return;
+
+  if (presentes.length === 0) {
+    el.innerHTML = 'Marque os presentes e sorteie!';
+  } else {
+
+    const times = Math.floor(presentes.length / jogadoresPorTime);
+    const resto = presentes.length % jogadoresPorTime;
+
+    el.innerHTML = `
+      <strong style="color:var(--green)">
+        ${presentes.length} presentes
+      </strong> · 
+      ${
+        times > 0
+        ? `${times} time(s) de ${jogadoresPorTime}`
+        : `<span style="color:var(--red)">mínimo ${jogadoresPorTime} para sortear</span>`
+      }
+      ${
+        resto > 0
+        ? `${times > 0 ? ' + ' : ''}${resto} reserva(s)`
+        : ''
+      }
+    `;
   }
 }
 
