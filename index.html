@@ -583,9 +583,10 @@ onAuthStateChanged(auth, user => {
     <div id="sort-info" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
       Marque os presentes e sorteie!
     </div>
-    <div style="top:10px;right:10px;background:#302f2f;padding:8px 10px;border:1px solid #039c36;border-radius:8px;z-index:9999;font-size:14px">
-Jogadores por time:
-<input id="jogadoresPorTime" type="number" value="6" min="3" max="11" style="width:60px">
+  <div class="config-jogadores">
+  <span class="config-label">👥 Jogadores por time</span>
+  <input id="jogadoresPorTime" type="number" value="6" min="3" max="11">
+</div>
 </div>
     <button class="btn btn-gold" onclick="sortearTimes()">⚡ SORTEAR AGORA</button>
     <div style="margin-top:8px">
@@ -2837,6 +2838,45 @@ function imprimirRelatorioPresencas() {
     .medal { font-size: 1rem; }
     .empty { color: #aaa; font-style: italic; padding: 8px 12px; font-size: 0.85rem; }
     .footer { margin-top: 30px; font-size: 0.75rem; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+
+    .config-jogadores{
+  position:absolute;
+  top:10px;
+  right:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#302f2f;
+  padding:8px 12px;
+  border:1px solid #039c36;
+  border-radius:8px;
+  font-size:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+
+.config-label{
+  color:#8fe0a9;
+  font-weight:600;
+  letter-spacing:0.3px;
+}
+
+.config-jogadores input{
+  width:55px;
+  background:#1b1b1b;
+  border:1px solid #039c36;
+  border-radius:6px;
+  color:white;
+  text-align:center;
+  font-weight:bold;
+  padding:4px;
+  outline:none;
+  transition:0.2s;
+}
+
+.config-jogadores input:focus{
+  border-color:#00ff88;
+  box-shadow:0 0 4px #00ff88;
+}
   </style></head><body>
   <h1>⚽ Controle de Pelada KF — Presenças ${nomeMes} ${ano}</h1>
   <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
