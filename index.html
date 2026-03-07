@@ -1496,6 +1496,55 @@ function sortearTimes() {
     }
   }
 
+  function equilibrarTimes(grupos, tentativas = 80) {
+
+  for (let t = 0; t < tentativas; t++) {
+
+    const medias = grupos.map(g => mediaTime(g));
+
+    const maxIndex = medias.indexOf(Math.max(...medias));
+    const minIndex = medias.indexOf(Math.min(...medias));
+
+    const timeForte = grupos[maxIndex];
+    const timeFraco = grupos[minIndex];
+
+    let melhorTroca = null;
+    let melhorMelhora = 0;
+
+    for (let i = 0; i < timeForte.length; i++) {
+      for (let j = 0; j < timeFraco.length; j++) {
+
+        const a = timeForte[i];
+        const b = timeFraco[j];
+
+        const novaMediaForte =
+          (timeForte.reduce((s,p)=>s+p.nivel,0) - a.nivel + b.nivel) / timeForte.length;
+
+        const novaMediaFraco =
+          (timeFraco.reduce((s,p)=>s+p.nivel,0) - b.nivel + a.nivel) / timeFraco.length;
+
+        const diffAtual = Math.abs(mediaTime(timeForte) - mediaTime(timeFraco));
+        const diffNova = Math.abs(novaMediaForte - novaMediaFraco);
+
+        const melhora = diffAtual - diffNova;
+
+        if (melhora > melhorMelhora) {
+          melhorMelhora = melhora;
+          melhorTroca = {i,j};
+        }
+      }
+    }
+
+    if (!melhorTroca) break;
+
+    const {i,j} = melhorTroca;
+
+    [timeForte[i], timeFraco[j]] =
+      [timeFraco[j], timeForte[i]];
+  }
+}
+
+  equilibrarTimes(grupos);
   renderTimes(grupos);
 }
 
