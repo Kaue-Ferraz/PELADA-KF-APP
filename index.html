@@ -2403,73 +2403,96 @@ function imprimirRelatorioMensalidades() {
 
   <div class="footer">Controle de Pelada KF · ${nomeMes} ${ano} · Relatório de Mensalidades</div>
   
-<!-- ADMIN BUTTON -->
-<button onclick="abrirAdmin()" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
+<!-- BOTAO ADMIN -->
+<button id="btnAdminOpen" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
 ADMIN
 </button>
 
-<!-- ADMIN PANEL -->
+<!-- PAINEL ADMIN -->
 <div id="adminPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;z-index:10000;overflow:auto;padding:20px;">
-  <h2>Painel Admin - Usuários</h2>
-  <button onclick="fecharAdmin()" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
-  <div id="listaUsuarios"></div>
+  <h2>Painel Admin</h2>
+  <button id="btnAdminClose" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
+  <div id="listaUsuarios">Clique em carregar usuários.</div>
+  <br>
+  <button id="btnCarregarUsuarios">Carregar usuários</button>
 </div>
 
 <script>
+(function(){
+
 function abrirAdmin(){
-  document.getElementById('adminPanel').style.display='block';
-  carregarUsuarios();
+  document.getElementById("adminPanel").style.display="block";
 }
 
 function fecharAdmin(){
-  document.getElementById('adminPanel').style.display='none';
+  document.getElementById("adminPanel").style.display="none";
 }
 
-async function carregarUsuarios(){
-  const lista = document.getElementById("listaUsuarios");
-  lista.innerHTML = "Carregando...";
+document.getElementById("btnAdminOpen").onclick = abrirAdmin;
+document.getElementById("btnAdminClose").onclick = fecharAdmin;
 
-  if(!window.firebase || !firebase.firestore){
-    lista.innerHTML = "Firebase não conectado.";
-    return;
+document.getElementById("btnCarregarUsuarios").onclick = async function(){
+
+  const lista = document.getElementById("listaUsuarios");
+
+  try{
+
+    if(!window.firebase || !firebase.firestore){
+      lista.innerHTML = "Firebase não detectado no modo compatível.";
+      return;
+    }
+
+    const db = firebase.firestore();
+    const snap = await db.collection("usuarios").get();
+
+    lista.innerHTML = "";
+
+    snap.forEach(function(doc){
+
+      const d = doc.data();
+      const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
+
+      const div = document.createElement("div");
+      div.style.border="1px solid #ccc";
+      div.style.padding="10px";
+      div.style.marginBottom="10px";
+
+      const email = d.email ? d.email : doc.id;
+
+      div.innerHTML =
+        "<strong>"+email+"</strong><br>" +
+        "Financeiro: "+status+"<br><br>" +
+        "<button onclick=\"ativarFinanceiro('"+doc.id+"')\">Ativar</button> " +
+        "<button onclick=\"desativarFinanceiro('"+doc.id+"')\">Desativar</button>";
+
+      lista.appendChild(div);
+
+    });
+
+  }catch(e){
+    lista.innerHTML = "Erro ao carregar usuários: " + e.message;
+    console.error(e);
   }
 
-  const db = firebase.firestore();
-  const snap = await db.collection("usuarios").get();
+};
 
-  lista.innerHTML = "";
-
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const div = document.createElement("div");
-    div.style.border="1px solid #ccc";
-    div.style.padding="10px";
-    div.style.marginBottom="10px";
-
-    const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
-
-    div.innerHTML = `
-      <strong>${d.email || doc.id}</strong><br>
-      Financeiro: ${status}<br><br>
-      <button onclick="ativarFinanceiro('${doc.id}')">Ativar</button>
-      <button onclick="desativarFinanceiro('${doc.id}')">Desativar</button>
-    `;
-
-    lista.appendChild(div);
-  });
+window.ativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
+    alert("Financeiro ativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function ativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
-  carregarUsuarios();
+window.desativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
+    alert("Financeiro desativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function desativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
-  carregarUsuarios();
-}
+})();
 </script>
 
 </body></html>`);
@@ -2695,73 +2718,96 @@ function imprimirRelatorioMensal() {
 
   <div class="footer">Controle de Pelada KF · Relatório gerado automaticamente</div>
   
-<!-- ADMIN BUTTON -->
-<button onclick="abrirAdmin()" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
+<!-- BOTAO ADMIN -->
+<button id="btnAdminOpen" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
 ADMIN
 </button>
 
-<!-- ADMIN PANEL -->
+<!-- PAINEL ADMIN -->
 <div id="adminPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;z-index:10000;overflow:auto;padding:20px;">
-  <h2>Painel Admin - Usuários</h2>
-  <button onclick="fecharAdmin()" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
-  <div id="listaUsuarios"></div>
+  <h2>Painel Admin</h2>
+  <button id="btnAdminClose" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
+  <div id="listaUsuarios">Clique em carregar usuários.</div>
+  <br>
+  <button id="btnCarregarUsuarios">Carregar usuários</button>
 </div>
 
 <script>
+(function(){
+
 function abrirAdmin(){
-  document.getElementById('adminPanel').style.display='block';
-  carregarUsuarios();
+  document.getElementById("adminPanel").style.display="block";
 }
 
 function fecharAdmin(){
-  document.getElementById('adminPanel').style.display='none';
+  document.getElementById("adminPanel").style.display="none";
 }
 
-async function carregarUsuarios(){
-  const lista = document.getElementById("listaUsuarios");
-  lista.innerHTML = "Carregando...";
+document.getElementById("btnAdminOpen").onclick = abrirAdmin;
+document.getElementById("btnAdminClose").onclick = fecharAdmin;
 
-  if(!window.firebase || !firebase.firestore){
-    lista.innerHTML = "Firebase não conectado.";
-    return;
+document.getElementById("btnCarregarUsuarios").onclick = async function(){
+
+  const lista = document.getElementById("listaUsuarios");
+
+  try{
+
+    if(!window.firebase || !firebase.firestore){
+      lista.innerHTML = "Firebase não detectado no modo compatível.";
+      return;
+    }
+
+    const db = firebase.firestore();
+    const snap = await db.collection("usuarios").get();
+
+    lista.innerHTML = "";
+
+    snap.forEach(function(doc){
+
+      const d = doc.data();
+      const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
+
+      const div = document.createElement("div");
+      div.style.border="1px solid #ccc";
+      div.style.padding="10px";
+      div.style.marginBottom="10px";
+
+      const email = d.email ? d.email : doc.id;
+
+      div.innerHTML =
+        "<strong>"+email+"</strong><br>" +
+        "Financeiro: "+status+"<br><br>" +
+        "<button onclick=\"ativarFinanceiro('"+doc.id+"')\">Ativar</button> " +
+        "<button onclick=\"desativarFinanceiro('"+doc.id+"')\">Desativar</button>";
+
+      lista.appendChild(div);
+
+    });
+
+  }catch(e){
+    lista.innerHTML = "Erro ao carregar usuários: " + e.message;
+    console.error(e);
   }
 
-  const db = firebase.firestore();
-  const snap = await db.collection("usuarios").get();
+};
 
-  lista.innerHTML = "";
-
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const div = document.createElement("div");
-    div.style.border="1px solid #ccc";
-    div.style.padding="10px";
-    div.style.marginBottom="10px";
-
-    const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
-
-    div.innerHTML = `
-      <strong>${d.email || doc.id}</strong><br>
-      Financeiro: ${status}<br><br>
-      <button onclick="ativarFinanceiro('${doc.id}')">Ativar</button>
-      <button onclick="desativarFinanceiro('${doc.id}')">Desativar</button>
-    `;
-
-    lista.appendChild(div);
-  });
+window.ativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
+    alert("Financeiro ativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function ativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
-  carregarUsuarios();
+window.desativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
+    alert("Financeiro desativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function desativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
-  carregarUsuarios();
-}
+})();
 </script>
 
 </body></html>`);
@@ -2855,73 +2901,96 @@ function imprimirRelatorioAnual() {
 
   <div class="footer">Controle de Pelada KF · Relatório Anual ${anoFiltro} · Gerado automaticamente</div>
   
-<!-- ADMIN BUTTON -->
-<button onclick="abrirAdmin()" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
+<!-- BOTAO ADMIN -->
+<button id="btnAdminOpen" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
 ADMIN
 </button>
 
-<!-- ADMIN PANEL -->
+<!-- PAINEL ADMIN -->
 <div id="adminPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;z-index:10000;overflow:auto;padding:20px;">
-  <h2>Painel Admin - Usuários</h2>
-  <button onclick="fecharAdmin()" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
-  <div id="listaUsuarios"></div>
+  <h2>Painel Admin</h2>
+  <button id="btnAdminClose" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
+  <div id="listaUsuarios">Clique em carregar usuários.</div>
+  <br>
+  <button id="btnCarregarUsuarios">Carregar usuários</button>
 </div>
 
 <script>
+(function(){
+
 function abrirAdmin(){
-  document.getElementById('adminPanel').style.display='block';
-  carregarUsuarios();
+  document.getElementById("adminPanel").style.display="block";
 }
 
 function fecharAdmin(){
-  document.getElementById('adminPanel').style.display='none';
+  document.getElementById("adminPanel").style.display="none";
 }
 
-async function carregarUsuarios(){
-  const lista = document.getElementById("listaUsuarios");
-  lista.innerHTML = "Carregando...";
+document.getElementById("btnAdminOpen").onclick = abrirAdmin;
+document.getElementById("btnAdminClose").onclick = fecharAdmin;
 
-  if(!window.firebase || !firebase.firestore){
-    lista.innerHTML = "Firebase não conectado.";
-    return;
+document.getElementById("btnCarregarUsuarios").onclick = async function(){
+
+  const lista = document.getElementById("listaUsuarios");
+
+  try{
+
+    if(!window.firebase || !firebase.firestore){
+      lista.innerHTML = "Firebase não detectado no modo compatível.";
+      return;
+    }
+
+    const db = firebase.firestore();
+    const snap = await db.collection("usuarios").get();
+
+    lista.innerHTML = "";
+
+    snap.forEach(function(doc){
+
+      const d = doc.data();
+      const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
+
+      const div = document.createElement("div");
+      div.style.border="1px solid #ccc";
+      div.style.padding="10px";
+      div.style.marginBottom="10px";
+
+      const email = d.email ? d.email : doc.id;
+
+      div.innerHTML =
+        "<strong>"+email+"</strong><br>" +
+        "Financeiro: "+status+"<br><br>" +
+        "<button onclick=\"ativarFinanceiro('"+doc.id+"')\">Ativar</button> " +
+        "<button onclick=\"desativarFinanceiro('"+doc.id+"')\">Desativar</button>";
+
+      lista.appendChild(div);
+
+    });
+
+  }catch(e){
+    lista.innerHTML = "Erro ao carregar usuários: " + e.message;
+    console.error(e);
   }
 
-  const db = firebase.firestore();
-  const snap = await db.collection("usuarios").get();
+};
 
-  lista.innerHTML = "";
-
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const div = document.createElement("div");
-    div.style.border="1px solid #ccc";
-    div.style.padding="10px";
-    div.style.marginBottom="10px";
-
-    const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
-
-    div.innerHTML = `
-      <strong>${d.email || doc.id}</strong><br>
-      Financeiro: ${status}<br><br>
-      <button onclick="ativarFinanceiro('${doc.id}')">Ativar</button>
-      <button onclick="desativarFinanceiro('${doc.id}')">Desativar</button>
-    `;
-
-    lista.appendChild(div);
-  });
+window.ativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
+    alert("Financeiro ativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function ativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
-  carregarUsuarios();
+window.desativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
+    alert("Financeiro desativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function desativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
-  carregarUsuarios();
-}
+})();
 </script>
 
 </body></html>`);
@@ -3258,73 +3327,96 @@ function imprimirRelatorioPresencas() {
 
   <div class="footer">Controle de Pelada KF · Relatório de Presenças · ${nomeMes} ${ano}</div>
   
-<!-- ADMIN BUTTON -->
-<button onclick="abrirAdmin()" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
+<!-- BOTAO ADMIN -->
+<button id="btnAdminOpen" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
 ADMIN
 </button>
 
-<!-- ADMIN PANEL -->
+<!-- PAINEL ADMIN -->
 <div id="adminPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;z-index:10000;overflow:auto;padding:20px;">
-  <h2>Painel Admin - Usuários</h2>
-  <button onclick="fecharAdmin()" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
-  <div id="listaUsuarios"></div>
+  <h2>Painel Admin</h2>
+  <button id="btnAdminClose" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
+  <div id="listaUsuarios">Clique em carregar usuários.</div>
+  <br>
+  <button id="btnCarregarUsuarios">Carregar usuários</button>
 </div>
 
 <script>
+(function(){
+
 function abrirAdmin(){
-  document.getElementById('adminPanel').style.display='block';
-  carregarUsuarios();
+  document.getElementById("adminPanel").style.display="block";
 }
 
 function fecharAdmin(){
-  document.getElementById('adminPanel').style.display='none';
+  document.getElementById("adminPanel").style.display="none";
 }
 
-async function carregarUsuarios(){
-  const lista = document.getElementById("listaUsuarios");
-  lista.innerHTML = "Carregando...";
+document.getElementById("btnAdminOpen").onclick = abrirAdmin;
+document.getElementById("btnAdminClose").onclick = fecharAdmin;
 
-  if(!window.firebase || !firebase.firestore){
-    lista.innerHTML = "Firebase não conectado.";
-    return;
+document.getElementById("btnCarregarUsuarios").onclick = async function(){
+
+  const lista = document.getElementById("listaUsuarios");
+
+  try{
+
+    if(!window.firebase || !firebase.firestore){
+      lista.innerHTML = "Firebase não detectado no modo compatível.";
+      return;
+    }
+
+    const db = firebase.firestore();
+    const snap = await db.collection("usuarios").get();
+
+    lista.innerHTML = "";
+
+    snap.forEach(function(doc){
+
+      const d = doc.data();
+      const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
+
+      const div = document.createElement("div");
+      div.style.border="1px solid #ccc";
+      div.style.padding="10px";
+      div.style.marginBottom="10px";
+
+      const email = d.email ? d.email : doc.id;
+
+      div.innerHTML =
+        "<strong>"+email+"</strong><br>" +
+        "Financeiro: "+status+"<br><br>" +
+        "<button onclick=\"ativarFinanceiro('"+doc.id+"')\">Ativar</button> " +
+        "<button onclick=\"desativarFinanceiro('"+doc.id+"')\">Desativar</button>";
+
+      lista.appendChild(div);
+
+    });
+
+  }catch(e){
+    lista.innerHTML = "Erro ao carregar usuários: " + e.message;
+    console.error(e);
   }
 
-  const db = firebase.firestore();
-  const snap = await db.collection("usuarios").get();
+};
 
-  lista.innerHTML = "";
-
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const div = document.createElement("div");
-    div.style.border="1px solid #ccc";
-    div.style.padding="10px";
-    div.style.marginBottom="10px";
-
-    const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
-
-    div.innerHTML = `
-      <strong>${d.email || doc.id}</strong><br>
-      Financeiro: ${status}<br><br>
-      <button onclick="ativarFinanceiro('${doc.id}')">Ativar</button>
-      <button onclick="desativarFinanceiro('${doc.id}')">Desativar</button>
-    `;
-
-    lista.appendChild(div);
-  });
+window.ativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
+    alert("Financeiro ativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function ativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
-  carregarUsuarios();
+window.desativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
+    alert("Financeiro desativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function desativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
-  carregarUsuarios();
-}
+})();
 </script>
 
 </body></html>`);
@@ -3377,73 +3469,96 @@ document.getElementById('jogadoresPorTime')
   .addEventListener('input', updateSortInfo);
 </script>
 
-<!-- ADMIN BUTTON -->
-<button onclick="abrirAdmin()" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
+<!-- BOTAO ADMIN -->
+<button id="btnAdminOpen" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px 14px;border:none;border-radius:6px;background:#111;color:#fff;cursor:pointer;">
 ADMIN
 </button>
 
-<!-- ADMIN PANEL -->
+<!-- PAINEL ADMIN -->
 <div id="adminPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;z-index:10000;overflow:auto;padding:20px;">
-  <h2>Painel Admin - Usuários</h2>
-  <button onclick="fecharAdmin()" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
-  <div id="listaUsuarios"></div>
+  <h2>Painel Admin</h2>
+  <button id="btnAdminClose" style="padding:8px 12px;margin-bottom:20px;">Fechar</button>
+  <div id="listaUsuarios">Clique em carregar usuários.</div>
+  <br>
+  <button id="btnCarregarUsuarios">Carregar usuários</button>
 </div>
 
 <script>
+(function(){
+
 function abrirAdmin(){
-  document.getElementById('adminPanel').style.display='block';
-  carregarUsuarios();
+  document.getElementById("adminPanel").style.display="block";
 }
 
 function fecharAdmin(){
-  document.getElementById('adminPanel').style.display='none';
+  document.getElementById("adminPanel").style.display="none";
 }
 
-async function carregarUsuarios(){
-  const lista = document.getElementById("listaUsuarios");
-  lista.innerHTML = "Carregando...";
+document.getElementById("btnAdminOpen").onclick = abrirAdmin;
+document.getElementById("btnAdminClose").onclick = fecharAdmin;
 
-  if(!window.firebase || !firebase.firestore){
-    lista.innerHTML = "Firebase não conectado.";
-    return;
+document.getElementById("btnCarregarUsuarios").onclick = async function(){
+
+  const lista = document.getElementById("listaUsuarios");
+
+  try{
+
+    if(!window.firebase || !firebase.firestore){
+      lista.innerHTML = "Firebase não detectado no modo compatível.";
+      return;
+    }
+
+    const db = firebase.firestore();
+    const snap = await db.collection("usuarios").get();
+
+    lista.innerHTML = "";
+
+    snap.forEach(function(doc){
+
+      const d = doc.data();
+      const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
+
+      const div = document.createElement("div");
+      div.style.border="1px solid #ccc";
+      div.style.padding="10px";
+      div.style.marginBottom="10px";
+
+      const email = d.email ? d.email : doc.id;
+
+      div.innerHTML =
+        "<strong>"+email+"</strong><br>" +
+        "Financeiro: "+status+"<br><br>" +
+        "<button onclick=\"ativarFinanceiro('"+doc.id+"')\">Ativar</button> " +
+        "<button onclick=\"desativarFinanceiro('"+doc.id+"')\">Desativar</button>";
+
+      lista.appendChild(div);
+
+    });
+
+  }catch(e){
+    lista.innerHTML = "Erro ao carregar usuários: " + e.message;
+    console.error(e);
   }
 
-  const db = firebase.firestore();
-  const snap = await db.collection("usuarios").get();
+};
 
-  lista.innerHTML = "";
-
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const div = document.createElement("div");
-    div.style.border="1px solid #ccc";
-    div.style.padding="10px";
-    div.style.marginBottom="10px";
-
-    const status = d.planoFinanceiro ? "ATIVO" : "BLOQUEADO";
-
-    div.innerHTML = `
-      <strong>${d.email || doc.id}</strong><br>
-      Financeiro: ${status}<br><br>
-      <button onclick="ativarFinanceiro('${doc.id}')">Ativar</button>
-      <button onclick="desativarFinanceiro('${doc.id}')">Desativar</button>
-    `;
-
-    lista.appendChild(div);
-  });
+window.ativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
+    alert("Financeiro ativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function ativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:true});
-  carregarUsuarios();
+window.desativarFinanceiro = async function(uid){
+  try{
+    const db = firebase.firestore();
+    await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
+    alert("Financeiro desativado");
+  }catch(e){ alert(e.message); }
 }
 
-async function desativarFinanceiro(uid){
-  const db = firebase.firestore();
-  await db.collection("usuarios").doc(uid).update({planoFinanceiro:false});
-  carregarUsuarios();
-}
+})();
 </script>
 
 </body>
