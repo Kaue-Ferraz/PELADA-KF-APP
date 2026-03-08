@@ -3509,6 +3509,7 @@ window._onAuthChange = async function(user) {
   if (user) {
     _currentUid = user.uid;
     _currentEmail = user.email || '';
+    loginScreen.classList.add('hidden');
     loading.classList.remove('hidden');
     userBar.style.display = 'flex';
     nameBar.style.display = 'block';
