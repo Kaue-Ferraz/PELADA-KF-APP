@@ -3144,7 +3144,7 @@ const ADMIN_EMAIL = 'ferrazkaue1@gmail.com';
 // Chave Pix (editável aqui)
 const PIX_CHAVE = '10305187694';
 // Telefone WhatsApp (editável aqui)
-const WHATSAPP = '22 99282-6224';
+const WHATSAPP = '22 992826224';
 
 // ─── verificarAcessoFinanceiro(user) ─────────────────────────────────────────
 async function verificarAcessoFinanceiro(user) {
@@ -3248,7 +3248,7 @@ function mostrarTelaPremium() {
       </div>
       <div style="border-top:1px solid #eee;padding-top:16px;font-size:0.82rem;color:#555;line-height:2">
         <div style="font-size:0.78rem;color:#333;margin-bottom:10px">Após o pagamento, envie o comprovante pelo WhatsApp junto com o seu e-mail de cadastro:</div>
-        <a href="https://wa.me/552299282624?text=Ol%C3%A1%2C%20fiz%20o%20Pix%20para%20liberar%20o%20m%C3%B3dulo%20financeiro%20do%20Pelada%20KF.%20Meu%20e-mail%20de%20cadastro%20%C3%A9%3A%20${encodeURIComponent(_currentEmail)}"
+        <a href="https://wa.me/5522992826224?text=Ol%C3%A1%2C%20fiz%20o%20Pix%20para%20liberar%20o%20m%C3%B3dulo%20financeiro%20do%20Pelada%20KF.%20Meu%20e-mail%20de%20cadastro%20%C3%A9%3A%20${encodeURIComponent(_currentEmail)}"
            target="_blank"
            style="display:block;width:100%;padding:11px;border-radius:10px;background:#25D366;color:#fff;font-weight:900;font-size:0.9rem;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
           📲 Enviar comprovante pelo WhatsApp
@@ -3377,6 +3377,7 @@ async function adminSalvarPlano() {
 // ─── ADMIN: CARREGAR LISTA DE USUÁRIOS ──────────────────────────────────────
 async function adminCarregarUsuarios() {
   const listEl = document.getElementById('admin-users-list');
+  if (!listEl) return;
   listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px">⏳ Carregando...</div>';
 
   try {
@@ -3385,7 +3386,7 @@ async function adminCarregarUsuarios() {
     const hoje = new Date().toISOString().split('T')[0];
 
     if (snap.empty) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:16px">Nenhum usuário encontrado.</div>';
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:16px">Nenhum usuário encontrado na coleção <b>usuarios</b>.<br>Os usuários aparecem aqui após o primeiro login.</div>';
       return;
     }
 
@@ -3428,7 +3429,13 @@ async function adminCarregarUsuarios() {
     listEl.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:16px">Nenhum usuário com dados.</div>';
   } catch(e) {
     console.error(e);
-    listEl.innerHTML = '<div style="color:var(--red);font-size:0.85rem;padding:12px">❌ Erro: ' + e.message + '</div>';
+    const permissao = e.code === 'permission-denied' || e.message?.includes('permission');
+    listEl.innerHTML = `<div style="color:var(--red);font-size:0.82rem;padding:12px;line-height:1.6">
+      ❌ <b>Erro ao carregar usuários</b><br>
+      ${permissao
+        ? '🔒 Sem permissão. Verifique as <b>Regras do Firestore</b> no Firebase Console e libere leitura da coleção <b>usuarios</b> para usuários autenticados.'
+        : e.message}
+    </div>`;
   }
 }
 
@@ -3541,8 +3548,9 @@ window._onAuthChange = async function(user) {
 
     // Abrir aba correta conforme perfil
     if (window._isAdmin) {
+      _removerBloqueio();
       showTab('admin');
-      adminCarregarUsuarios(); // já carrega a lista automaticamente
+      adminCarregarUsuarios();
     } else {
       showTab('jogadores');
     }
