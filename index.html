@@ -370,7 +370,31 @@ window._doLogout = async function() {
 };
 
 // Registra callback de autenticação
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    // Verifica/cria plano do usuário no Firestore
+    const planoRef  = doc(db, "usuarios", user.uid);
+    const planoSnap = await getDoc(planoRef);
+
+    if (!planoSnap.exists()) {
+      await setDoc(planoRef, {
+        plano:      "gratuito",
+        premiumAte: null,
+        pixPago:    false,
+        email:      user.email
+      });
+      window._planoAtual = "gratuito";
+    } else {
+      const dados = planoSnap.data();
+      let planoFinal = dados.plano || "gratuito";
+      if (planoFinal === "premium" && dados.premiumAte) {
+        if (new Date() > dados.premiumAte.toDate()) planoFinal = "gratuito";
+      }
+      window._planoAtual = planoFinal;
+    }
+  } else {
+    window._planoAtual = "gratuito";
+  }
   if (window._onAuthChange) window._onAuthChange(user);
 }); 
 
@@ -3073,6 +3097,8 @@ window._onAuthChange = async function(user) {
     await loadData();
     await loadFinData();
     await loadPeladaName();
+    if (window.aplicarRestricoes) window.aplicarRestricoes(window._planoAtual || 'gratuito');
+    if (window.iniciarAdmin) window.iniciarAdmin(user);
     selectNivel(3);
     setPlayerView('ativos');
     const mesRefEl = document.getElementById('input-mes-ref');
@@ -3099,5 +3125,7 @@ window._onAuthChange = async function(user) {
 document.getElementById('jogadoresPorTime')
   .addEventListener('input', updateSortInfo);
 </script>
+<script src="freemium-pelada-kf.js"></script>
+<script src="admin-pelada-kf.js"></script>
 </body>
 </html>
