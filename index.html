@@ -439,6 +439,10 @@ onAuthStateChanged(auth, user => {
   <div class="tab" onclick="showTab('presenca')"><span class="tab-icon">✅</span>PRESENÇA</div>
   <div class="tab" onclick="showTab('times')"><span class="tab-icon">🎲</span>TIMES</div>
   <div class="tab" onclick="showTab('financeiro')"><span class="tab-icon">💰</span>CAIXA</div>
+  <!-- Adicione após a última .tab -->
+<div class="tab" id="tab-admin" style="display:none" onclick="showTab('admin')">
+  <span class="tab-icon">🛡️</span>ADMIN
+</div>
 </div>
 
 <!-- JOGADORES -->
@@ -968,6 +972,49 @@ onAuthStateChanged(auth, user => {
     </div> <!-- fim vis-mensal -->
 
 </div>
+<!-- FIM page-financeiro -->
+
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div class="card">
+    <div class="card-title">🛡️ Painel Administrador</div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+      Gerencie o plano de acesso dos usuários. Cole o UID do Firebase do usuário e defina se o plano está ativo e até quando é válido.
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="section-label">UID do usuário</div>
+      <input type="text" id="admin-uid-input" placeholder="Cole o UID do usuário aqui...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div>
+        <div class="section-label">Plano Ativo</div>
+        <select id="admin-plano-ativo">
+          <option value="true">✅ Ativo</option>
+          <option value="false">❌ Bloqueado</option>
+        </select>
+      </div>
+      <div>
+        <div class="section-label">Validade (AAAA-MM-DD)</div>
+        <input type="text" id="admin-validade" placeholder="Ex: 2025-12-31">
+      </div>
+    </div>
+    <button class="btn btn-green" onclick="adminSalvarPlano()">💾 SALVAR PLANO DO USUÁRIO</button>
+    <div id="admin-msg" style="margin-top:10px;font-size:0.8rem;text-align:center;min-height:20px"></div>
+  </div>
+
+  <div class="card" style="border-color:#1a3a6b">
+    <div class="card-title" style="color:#60a5fa">🔍 Consultar Plano</div>
+    <div style="margin-bottom:10px">
+      <div class="section-label">UID do usuário</div>
+      <input type="text" id="admin-consulta-uid" placeholder="Cole o UID para consultar...">
+    </div>
+    <button class="btn" onclick="adminConsultarPlano()" style="background:#1a3a6b;color:#60a5fa;border:1px solid #3b82f6;font-family:Nunito,sans-serif;font-weight:900;font-size:0.9rem;letter-spacing:0">
+      🔍 CONSULTAR STATUS
+    </button>
+    <div id="admin-consulta-result" style="margin-top:12px;font-size:0.85rem;line-height:1.8;min-height:20px"></div>
+  </div>
+</div>
+<!-- FIM page-admin -->
 
 <div class="toast" id="toast"></div>
 
@@ -1109,9 +1156,14 @@ function setSaveIndicator(cls, msg) {
 function showTab(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  const idx = ['jogadores','presenca','times','financeiro'].indexOf(name);
-  document.querySelectorAll('.tab')[idx].classList.add('active');
+  const page = document.getElementById('page-' + name);
+  if (page) page.classList.add('active');
+  // Marcar aba ativa pelo onclick em vez de índice fixo
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + name + "'")) {
+      t.classList.add('active');
+    }
+  });
   if (name === 'presenca') { renderPresence(); initPresencaMes(); }
   if (name === 'times') updateSortInfo();
   if (name === 'financeiro') initFinanceiro();
@@ -3053,6 +3105,180 @@ function imprimirRelatorioPresencas() {
 }
 
 // ─── AUTH STATE HANDLER ───────────────────────────────────────────────────
+// UID do administrador — coloque o seu UID aqui
+const ADMIN_UID = 'JxYNzRilzJUBHbHG0fE6c3Nqd732'; // ex: 'abc123xyz...'
+
+async function verificarPlano(uid) {
+  // Admin sempre tem acesso total
+  window._isAdmin = (uid === ADMIN_UID);
+  if (window._isAdmin) {
+    window._planoAtivo = true;
+    renderTabFinanceiro(true);
+    // Mostrar aba admin
+    const tabAdmin = document.getElementById('tab-admin');
+    if (tabAdmin) tabAdmin.style.display = '';
+    return;
+  }
+
+  // Esconder aba admin para não-admins
+  const tabAdmin = document.getElementById('tab-admin');
+  if (tabAdmin) tabAdmin.style.display = 'none';
+
+  const db = window._fbDb;
+  const docRef = window._fbDoc(db, 'users', uid);
+  const snap = await window._fbGetDoc(docRef);
+
+  if (!snap.exists()) {
+    window._planoAtivo = false;
+    renderTabFinanceiro(false);
+    return;
+  }
+
+  const data = snap.data();
+  const ativo = data.planoAtivo === true;
+  const validade = data.validade || '';
+  const hoje = new Date().toISOString().split('T')[0]; // "2025-03-08"
+  const dentroValidade = validade >= hoje;
+
+  window._planoAtivo = ativo && dentroValidade;
+  renderTabFinanceiro(window._planoAtivo);
+}
+
+function renderTabFinanceiro(liberado) {
+  const pageFin = document.getElementById('page-financeiro');
+  const tabFin  = document.querySelector('.tab[onclick*="financeiro"]');
+
+  if (liberado) {
+    // Remove bloqueio se existir
+    const bloqueio = document.getElementById('fin-bloqueio');
+    if (bloqueio) bloqueio.remove();
+    if (tabFin) tabFin.style.opacity = '1';
+  } else {
+    // Cria tela de bloqueio dentro da página financeiro
+    if (!document.getElementById('fin-bloqueio')) {
+      const div = document.createElement('div');
+      div.id = 'fin-bloqueio';
+      div.style.cssText = `
+        position:absolute; inset:0; background:rgba(10,10,10,0.97);
+        z-index:500; display:flex; flex-direction:column;
+        align-items:center; justify-content:center; padding:30px; text-align:center;
+      `;
+      div.innerHTML = `
+        <div style="font-size:3rem;margin-bottom:16px">🔒</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#1db954;letter-spacing:3px;margin-bottom:10px">
+          MÓDULO FINANCEIRO
+        </div>
+        <div style="font-size:0.9rem;color:#aaa;margin-bottom:24px;line-height:1.7">
+          Esta funcionalidade requer um plano ativo.<br>
+          Faça um PIX para liberar seu acesso!
+        </div>
+        <div style="background:#141414;border:1px solid #1db954;border-radius:12px;padding:16px;margin-bottom:20px;width:100%;max-width:300px">
+          <div style="font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Chave PIX</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#f4c430;letter-spacing:1px" id="pix-chave-texto">
+            10305187694
+          </div>
+          <button onclick="copiarPix()" style="margin-top:10px;padding:8px 16px;border-radius:8px;border:none;background:#1db954;color:#000;font-weight:700;font-size:0.85rem;cursor:pointer;width:100%">
+            📋 COPIAR CHAVE PIX
+          </button>
+        </div>
+        <div style="font-size:0.75rem;color:#555;line-height:1.6">
+          Após o pagamento, aguarde a liberação.<br>
+          Dúvidas? Entre em contato com o administrador 22 9928266224 - SOMENTE WHATSAPP.
+        </div>
+      `;
+      pageFin.style.position = 'relative';
+      pageFin.appendChild(div);
+    }
+    if (tabFin) tabFin.style.opacity = '0.5';
+  }
+}
+
+function copiarPix() {
+  const chave = document.getElementById('pix-chave-texto')?.textContent?.trim() || '10305187694';
+  navigator.clipboard.writeText(chave).then(() => {
+    showToast('✅ Chave PIX copiada!');
+  });
+}
+
+// ─── ADMIN: SALVAR PLANO ────────────────────────────────────────────────────
+async function adminSalvarPlano() {
+  const uid      = document.getElementById('admin-uid-input').value.trim();
+  const ativo    = document.getElementById('admin-plano-ativo').value === 'true';
+  const validade = document.getElementById('admin-validade').value.trim();
+  const msgEl    = document.getElementById('admin-msg');
+
+  if (!uid) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '⚠️ Informe o UID do usuário.';
+    return;
+  }
+  if (!validade || !/^\d{4}-\d{2}-\d{2}$/.test(validade)) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '⚠️ Validade inválida. Use o formato AAAA-MM-DD.';
+    return;
+  }
+
+  msgEl.style.color = 'var(--text-muted)';
+  msgEl.textContent = '⏳ Salvando...';
+
+  try {
+    const db     = window._fbDb;
+    const docRef = window._fbDoc(db, 'users', uid);
+    await window._fbSetDoc(docRef, { planoAtivo: ativo, validade: validade }, { merge: true });
+    msgEl.style.color = 'var(--green)';
+    msgEl.textContent = `✅ Plano ${ativo ? 'ATIVADO' : 'BLOQUEADO'} até ${validade} com sucesso!`;
+    showToast('✅ Plano salvo!');
+  } catch (e) {
+    console.error(e);
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '❌ Erro ao salvar: ' + e.message;
+  }
+}
+
+// ─── ADMIN: CONSULTAR PLANO ─────────────────────────────────────────────────
+async function adminConsultarPlano() {
+  const uid    = document.getElementById('admin-consulta-uid').value.trim();
+  const resEl  = document.getElementById('admin-consulta-result');
+
+  if (!uid) {
+    resEl.style.color = 'var(--red)';
+    resEl.textContent = '⚠️ Informe o UID do usuário.';
+    return;
+  }
+
+  resEl.style.color = 'var(--text-muted)';
+  resEl.textContent = '⏳ Consultando...';
+
+  try {
+    const db     = window._fbDb;
+    const docRef = window._fbDoc(db, 'users', uid);
+    const snap   = await window._fbGetDoc(docRef);
+
+    if (!snap.exists()) {
+      resEl.innerHTML = `<span style="color:var(--text-muted)">⚠️ Usuário não encontrado no banco.</span>`;
+      return;
+    }
+
+    const d = snap.data();
+    const hoje = new Date().toISOString().split('T')[0];
+    const dentroValidade = (d.validade || '') >= hoje;
+    const status = d.planoAtivo && dentroValidade ? '✅ ATIVO' : '❌ BLOQUEADO';
+    const cor    = d.planoAtivo && dentroValidade ? 'var(--green)' : 'var(--red)';
+
+    resEl.innerHTML = `
+      <div><strong>Status:</strong> <span style="color:${cor};font-weight:900">${status}</span></div>
+      <div><strong>planoAtivo:</strong> ${d.planoAtivo ? 'true' : 'false'}</div>
+      <div><strong>Validade:</strong> ${d.validade || '—'}</div>
+      <div><strong>UID:</strong> <span style="font-size:0.75rem;color:var(--text-muted)">${uid}</span></div>
+    `;
+  } catch (e) {
+    console.error(e);
+    resEl.style.color = 'var(--red)';
+    resEl.textContent = '❌ Erro ao consultar: ' + e.message;
+  }
+}
+
+
 window._onAuthChange = async function(user) {
   const loginScreen = document.getElementById('login-screen');
   const loading     = document.getElementById('loading');
@@ -3068,6 +3294,7 @@ window._onAuthChange = async function(user) {
     document.getElementById('user-email-label').textContent = user.displayName || user.email;
 
     await loadData();
+    await verificarPlano(user.uid);
     await loadFinData();
     await loadPeladaName();
     selectNivel(3);
