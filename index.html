@@ -3169,32 +3169,34 @@ async function verificarAcessoFinanceiro(user) {
     const snap   = await window._fbGetDoc(docRef);
 
     if (!snap.exists()) {
-      // Criar documento com plano bloqueado
-      await window._fbSetDoc(docRef, { email, liberar: false, validade: null });
+      // Sem documento = bloquear, criar em background
       window._planoAtivo = false;
+      window._fbSetDoc(docRef, { email, liberar: false, validade: null }).catch(()=>{});
       mostrarTelaPremium();
       return;
     }
 
     const data = snap.data();
 
-    // Garantir que os campos novos existem no documento (usuários antigos)
+    // Atualizar campos em background sem bloquear o acesso
     const camposFaltando = !('liberar' in data) || !('email' in data);
     if (camposFaltando) {
-      await window._fbSetDoc(docRef, {
+      window._fbSetDoc(docRef, {
         email: data.email || email,
         liberar: data.planoAtivo === true || false,
         validade: data.validade || null
-      }, { merge: true });
+      }, { merge: true }).catch(()=>{});
     }
 
     const liberar = data.liberar === true || (camposFaltando && data.planoAtivo === true);
     const validade = data.validade || '';
     const hoje = new Date().toISOString().split('T')[0];
-    // Se não tem validade definida mas liberar=true, concede acesso permanente
+    // liberar:true sem validade = acesso permanente
     const dentroValidade = !validade || validade >= hoje;
 
     window._planoAtivo = liberar && dentroValidade;
+
+    console.log(`[Acesso] uid=${uid} liberar=${liberar} validade="${validade}" planoAtivo=${window._planoAtivo}`);
 
     if (window._planoAtivo) {
       _removerBloqueio();
@@ -3203,8 +3205,9 @@ async function verificarAcessoFinanceiro(user) {
     }
   } catch(e) {
     console.error('Erro verificarAcessoFinanceiro:', e);
-    window._planoAtivo = false;
-    mostrarTelaPremium();
+    // Em caso de erro de leitura, não bloquear — dar benefício da dúvida
+    window._planoAtivo = true;
+    _removerBloqueio();
   }
 }
 
@@ -3395,15 +3398,15 @@ async function adminCarregarUsuarios() {
     snap.forEach(docSnap => {
       const uid = docSnap.id;
       const d   = docSnap.data();
-      // Ignorar docs sem email (são sub-coleções ou lixo)
-      if (!d.email) return;
+      // Ignorar docs que não são de usuário (sem nenhum campo reconhecível)
+      if (d.email === undefined && d.liberar === undefined) return;
       const liberar  = d.liberar === true;
       const validade = d.validade || '';
       const dentroVal = !validade || validade >= hoje; // sem validade = permanente
       const liberado = liberar && dentroVal;
       const cor = liberado ? 'var(--green)' : 'var(--red)';
       const badge = liberado ? '✅ ATIVO' : '❌ BLOQUEADO';
-      const email = d.email || '—';
+      const email = d.email || '(sem email)';
 
       html += `
         <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid ${liberado ? '#1a4a2e' : '#3a1a1a'}">
