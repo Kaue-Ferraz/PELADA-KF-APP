@@ -370,43 +370,10 @@ window._doLogout = async function() {
 };
 
 // Registra callback de autenticação
-/* onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, user => {
   if (window._onAuthChange) window._onAuthChange(user);
-}); */
+}); 
 
-// Registra callback de autenticação
-// Registra callback de autenticação
-onAuthStateChanged(auth, async user => {
-  if (user) {
-    const planoRef  = doc(db, "usuarios", user.uid);
-    const planoSnap = await getDoc(planoRef);
-
-    if (!planoSnap.exists()) {
-      await setDoc(planoRef, {
-        plano:      "gratuito",
-        premiumAte: null,
-        pixPago:    false,
-        email:      user.email
-      });
-    }
-
-    const dados = planoSnap.exists() ? planoSnap.data() : { plano: "gratuito" };
-    let planoFinal = dados.plano || "gratuito";
-
-    if (planoFinal === "premium" && dados.premiumAte) {
-      if (new Date() > dados.premiumAte.toDate()) planoFinal = "gratuito";
-    }
-
-    window._planoAtual = planoFinal;
-    window._aplicarRestricoes = window._aplicarRestricoes || function(){};
-    window._iniciarAdmin = window._iniciarAdmin || function(){};
-    setTimeout(() => {
-      if (window.aplicarRestricoes) window.aplicarRestricoes(planoFinal);
-      if (window.iniciarAdmin) window.iniciarAdmin(user);
-    }, 300);
-  }
-  if (window._onAuthChange) window._onAuthChange(user);
-});
 </script>
 
 <!-- PWA icons -->
