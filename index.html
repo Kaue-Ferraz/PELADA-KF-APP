@@ -1044,6 +1044,7 @@ const STORAGE_KEY = 'pelada_kf_players';
 const FIN_KEY_CONST = 'pelada_kf_financeiro';
 const PELADA_NAME_KEY = 'pelada_kf_nome';
 let _currentUid = null;
+let _currentEmail = '';
 window._loginMode = 'login';
 
 // ─── ERROR MESSAGES ────────────────────────────────────────────────────────
@@ -3145,14 +3146,14 @@ const PIX_CHAVE = '10305187694';
 // Telefone WhatsApp (editável aqui)
 const WHATSAPP = '22 99282-6224';
 
-// ─── verificarAcessoFinanceiro() ─────────────────────────────────────────────
-async function verificarAcessoFinanceiro() {
-  const uid = window._currentUid;
+// ─── verificarAcessoFinanceiro(user) ─────────────────────────────────────────
+async function verificarAcessoFinanceiro(user) {
+  const uid   = user?.uid   || window._currentUid;
+  const email = user?.email || '';
   if (!uid) { mostrarTelaPremium(); return; }
 
-  // Admin sempre tem acesso total
-  const currentUser = window._fbAuth?.currentUser;
-  window._isAdmin = !!(currentUser && currentUser.email === ADMIN_EMAIL);
+  // Checar admin pelo email — direto do objeto user, sem depender de currentUser
+  window._isAdmin = (email === ADMIN_EMAIL);
   const tabAdmin = document.getElementById('tab-admin');
   if (tabAdmin) tabAdmin.style.display = window._isAdmin ? '' : 'none';
 
@@ -3163,20 +3164,31 @@ async function verificarAcessoFinanceiro() {
   }
 
   try {
-    const db = window._fbDb;
+    const db     = window._fbDb;
     const docRef = window._fbDoc(db, 'usuarios', uid);
-    const snap = await window._fbGetDoc(docRef);
+    const snap   = await window._fbGetDoc(docRef);
 
     if (!snap.exists()) {
-      // Sem documento = criar com plano bloqueado e bloquear
-      await window._fbSetDoc(docRef, { email: currentUser?.email || '', liberar: false, validade: null }, { merge: true });
+      // Criar documento com plano bloqueado
+      await window._fbSetDoc(docRef, { email, liberar: false, validade: null });
       window._planoAtivo = false;
       mostrarTelaPremium();
       return;
     }
 
     const data = snap.data();
-    const liberar = data.liberar === true;
+
+    // Garantir que os campos novos existem no documento (usuários antigos)
+    const camposFaltando = !('liberar' in data) || !('email' in data);
+    if (camposFaltando) {
+      await window._fbSetDoc(docRef, {
+        email: data.email || email,
+        liberar: data.planoAtivo === true || false,
+        validade: data.validade || null
+      }, { merge: true });
+    }
+
+    const liberar = data.liberar === true || (camposFaltando && data.planoAtivo === true);
     const validade = data.validade || '';
     const hoje = new Date().toISOString().split('T')[0];
     const dentroValidade = validade && validade >= hoje;
@@ -3236,7 +3248,7 @@ function mostrarTelaPremium() {
       </div>
       <div style="border-top:1px solid #eee;padding-top:16px;font-size:0.82rem;color:#555;line-height:2">
         <div style="font-size:0.78rem;color:#333;margin-bottom:10px">Após o pagamento, envie o comprovante pelo WhatsApp junto com o seu e-mail de cadastro:</div>
-        <a href="https://wa.me/552299282624?text=Ol%C3%A1%2C%20fiz%20o%20Pix%20para%20liberar%20o%20m%C3%B3dulo%20financeiro%20do%20Pelada%20KF.%20Meu%20e-mail%20de%20cadastro%20%C3%A9%3A%20${encodeURIComponent(window._fbAuth?.currentUser?.email || '')}"
+        <a href="https://wa.me/552299282624?text=Ol%C3%A1%2C%20fiz%20o%20Pix%20para%20liberar%20o%20m%C3%B3dulo%20financeiro%20do%20Pelada%20KF.%20Meu%20e-mail%20de%20cadastro%20%C3%A9%3A%20${encodeURIComponent(_currentEmail)}"
            target="_blank"
            style="display:block;width:100%;padding:11px;border-radius:10px;background:#25D366;color:#fff;font-weight:900;font-size:0.9rem;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
           📲 Enviar comprovante pelo WhatsApp
@@ -3496,7 +3508,7 @@ window._onAuthChange = async function(user) {
 
   if (user) {
     _currentUid = user.uid;
-    loginScreen.classList.add('hidden');
+    _currentEmail = user.email || '';
     loading.classList.remove('hidden');
     userBar.style.display = 'flex';
     nameBar.style.display = 'block';
@@ -3504,14 +3516,12 @@ window._onAuthChange = async function(user) {
 
     try {
       await loadData();
-      await verificarAcessoFinanceiro();
+      await verificarAcessoFinanceiro(user);
       await loadFinData();
       await loadPeladaName();
-      // Salvar email do usuário no Firestore (coleção usuarios)
-      if (user.email) {
-        const uRef = window._fbDoc(window._fbDb, 'usuarios', user.uid);
-        await window._fbSetDoc(uRef, { email: user.email }, { merge: true });
-      }
+      // Garantir documento usuarios/{uid} sempre atualizado com email
+      const uRef = window._fbDoc(window._fbDb, 'usuarios', user.uid);
+      await window._fbSetDoc(uRef, { email: user.email || '' }, { merge: true });
       // Se for admin, migrar usuários antigos
       if (window._isAdmin) {
         migrarUsuariosAntigos();
@@ -3539,7 +3549,7 @@ window._onAuthChange = async function(user) {
     loading.classList.add('hidden');
   } else {
     _currentUid = null;
-    players = [];
+    _currentEmail = '';
     finData = { mensalidade:25, ano:new Date().getFullYear(), pagamentos:{}, despesas:{}, entradas:{}, ajustes:{}, presencas:{} };
     loginScreen.classList.remove('hidden');
     loading.classList.add('hidden');
