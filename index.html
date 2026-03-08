@@ -313,7 +313,7 @@ window._doLogin = async function() {
       // Criar documento do usuário com plano bloqueado por padrão
       try {
         const db = window._fbDb;
-        const uRef = window._fbDoc(db, 'usuarios', cred.user.uid);
+        const uRef = window._fbDoc(db, 'users', cred.user.uid);
         await window._fbSetDoc(uRef, { email: email, liberar: false, validade: null }, { merge: true });
       } catch(dbErr) { console.warn('Erro ao criar doc usuário:', dbErr); }
     } catch(e) {
@@ -3165,7 +3165,7 @@ async function verificarAcessoFinanceiro(user) {
 
   try {
     const db     = window._fbDb;
-    const docRef = window._fbDoc(db, 'usuarios', uid);
+    const docRef = window._fbDoc(db, 'users', uid);
     const snap   = await window._fbGetDoc(docRef);
 
     if (!snap.exists()) {
@@ -3191,7 +3191,8 @@ async function verificarAcessoFinanceiro(user) {
     const liberar = data.liberar === true || (camposFaltando && data.planoAtivo === true);
     const validade = data.validade || '';
     const hoje = new Date().toISOString().split('T')[0];
-    const dentroValidade = validade && validade >= hoje;
+    // Se não tem validade definida mas liberar=true, concede acesso permanente
+    const dentroValidade = !validade || validade >= hoje;
 
     window._planoAtivo = liberar && dentroValidade;
 
@@ -3312,7 +3313,7 @@ async function liberarUsuario() {
   try {
     const db = window._fbDb;
     // Buscar usuário pelo email na coleção usuarios
-    const snap = await window._fbGetDocs(window._fbCollection(db, 'usuarios'));
+    const snap = await window._fbGetDocs(window._fbCollection(db, 'users'));
     let uidAlvo = null;
     snap.forEach(docSnap => {
       if (docSnap.data().email === emailAlvo.trim()) uidAlvo = docSnap.id;
@@ -3328,7 +3329,7 @@ async function liberarUsuario() {
     hoje.setMonth(hoje.getMonth() + meses);
     const validade = hoje.toISOString().split('T')[0];
 
-    const docRef = window._fbDoc(db, 'usuarios', uidAlvo);
+    const docRef = window._fbDoc(db, 'users', uidAlvo);
     await window._fbSetDoc(docRef, { liberar: true, validade: validade }, { merge: true });
 
     showToast(`✅ Acesso liberado até ${validade}!`);
@@ -3362,7 +3363,7 @@ async function adminSalvarPlano() {
 
   try {
     const db     = window._fbDb;
-    const docRef = window._fbDoc(db, 'usuarios', uid);
+    const docRef = window._fbDoc(db, 'users', uid);
     await window._fbSetDoc(docRef, { liberar: ativo, validade: validade }, { merge: true });
     msgEl.style.color = 'var(--green)';
     msgEl.textContent = `✅ Plano ${ativo ? 'ATIVADO' : 'BLOQUEADO'} até ${validade} com sucesso!`;
@@ -3382,7 +3383,7 @@ async function adminCarregarUsuarios() {
 
   try {
     const db   = window._fbDb;
-    const snap = await window._fbGetDocs(window._fbCollection(db, 'usuarios'));
+    const snap = await window._fbGetDocs(window._fbCollection(db, 'users'));
     const hoje = new Date().toISOString().split('T')[0];
 
     if (snap.empty) {
@@ -3394,9 +3395,11 @@ async function adminCarregarUsuarios() {
     snap.forEach(docSnap => {
       const uid = docSnap.id;
       const d   = docSnap.data();
+      // Ignorar docs sem email (são sub-coleções ou lixo)
+      if (!d.email) return;
       const liberar  = d.liberar === true;
       const validade = d.validade || '';
-      const dentroVal = validade && validade >= hoje;
+      const dentroVal = !validade || validade >= hoje; // sem validade = permanente
       const liberado = liberar && dentroVal;
       const cor = liberado ? 'var(--green)' : 'var(--red)';
       const badge = liberado ? '✅ ATIVO' : '❌ BLOQUEADO';
@@ -3408,7 +3411,7 @@ async function adminCarregarUsuarios() {
             <span style="font-weight:700;font-size:0.85rem;color:var(--text);word-break:break-all">${email}</span>
             <span style="font-size:0.75rem;font-weight:900;color:${cor};white-space:nowrap;margin-left:8px">${badge}</span>
           </div>
-          <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:8px">Válido até: ${validade || '—'}</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:8px">Válido até: ${validade || 'Permanente'}</div>
           <div style="display:flex;gap:6px">
             <button onclick="adminLiberarRapido('${uid}', '${email}', 1)"
               style="flex:1;padding:7px 4px;border-radius:8px;border:none;background:#1db954;color:#000;font-weight:900;font-size:0.72rem;cursor:pointer">
@@ -3424,6 +3427,7 @@ async function adminCarregarUsuarios() {
             </button>
           </div>
         </div>`;
+    });
     });
 
     listEl.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:16px">Nenhum usuário com dados.</div>';
@@ -3455,7 +3459,7 @@ async function adminLiberarRapido(uid, email, meses) {
   const validade = hoje.toISOString().split('T')[0];
   try {
     const db = window._fbDb;
-    await window._fbSetDoc(window._fbDoc(db, 'usuarios', uid), { liberar: true, validade }, { merge: true });
+    await window._fbSetDoc(window._fbDoc(db, 'users', uid), { liberar: true, validade }, { merge: true });
     showToast(`✅ ${email} liberado até ${validade}`);
     adminCarregarUsuarios();
   } catch(e) {
@@ -3467,7 +3471,7 @@ async function adminBloquear(uid, email) {
   if (!confirm(`Bloquear acesso de ${email}?`)) return;
   try {
     const db = window._fbDb;
-    await window._fbSetDoc(window._fbDoc(db, 'usuarios', uid), { liberar: false, validade: null }, { merge: true });
+    await window._fbSetDoc(window._fbDoc(db, 'users', uid), { liberar: false, validade: null }, { merge: true });
     showToast(`🔒 ${email} bloqueado.`);
     adminCarregarUsuarios();
   } catch(e) {
@@ -3476,36 +3480,8 @@ async function adminBloquear(uid, email) {
 }
 
 
-// ─── MIGRAR USUÁRIOS ANTIGOS (users/ → usuarios/) ────────────────────────────
-async function migrarUsuariosAntigos() {
-  try {
-    const db = window._fbDb;
-    const snapAntigos = await window._fbGetDocs(window._fbCollection(db, 'users'));
-    if (snapAntigos.empty) return;
-
-    let migrados = 0;
-    for (const docSnap of snapAntigos.docs) {
-      const uid = docSnap.id;
-      const d = docSnap.data();
-      // Só migrar docs que têm email (são docs de usuário, não sub-dados)
-      if (!d.email) continue;
-      const novoRef = window._fbDoc(db, 'usuarios', uid);
-      const novoSnap = await window._fbGetDoc(novoRef);
-      // Só criar se ainda não existe em usuarios/
-      if (!novoSnap.exists()) {
-        await window._fbSetDoc(novoRef, {
-          email: d.email,
-          liberar: d.planoAtivo === true,
-          validade: d.validade || null
-        });
-        migrados++;
-      }
-    }
-    if (migrados > 0) console.log(`✅ ${migrados} usuário(s) migrado(s) para coleção usuarios/`);
-  } catch(e) {
-    console.warn('Migração usuarios:', e);
-  }
-}
+// ─── MIGRAR USUÁRIOS ANTIGOS — não necessário, mesma coleção
+function migrarUsuariosAntigos() { /* noop */ }
 
 window._onAuthChange = async function(user) {
   const loginScreen = document.getElementById('login-screen');
@@ -3528,7 +3504,7 @@ window._onAuthChange = async function(user) {
       await loadFinData();
       await loadPeladaName();
       // Garantir documento usuarios/{uid} sempre atualizado com email
-      const uRef = window._fbDoc(window._fbDb, 'usuarios', user.uid);
+      const uRef = window._fbDoc(window._fbDb, 'users', user.uid);
       await window._fbSetDoc(uRef, { email: user.email || '' }, { merge: true });
       // Se for admin, migrar usuários antigos
       if (window._isAdmin) {
