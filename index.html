@@ -370,9 +370,39 @@ window._doLogout = async function() {
 };
 
 // Registra callback de autenticação
-onAuthStateChanged(auth, user => {
+/* onAuthStateChanged(auth, user => {
+  if (window._onAuthChange) window._onAuthChange(user);
+}); */
+
+// Registra callback de autenticação
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    const planoRef  = doc(db, "usuarios", user.uid);
+    const planoSnap = await getDoc(planoRef);
+
+    if (!planoSnap.exists()) {
+      await setDoc(planoRef, {
+        plano:      "gratuito",
+        premiumAte: null,
+        pixPago:    false,
+        email:      user.email
+      });
+    }
+
+    const dados = planoSnap.exists() ? planoSnap.data() : { plano: "gratuito" };
+    let planoFinal = dados.plano || "gratuito";
+
+    if (planoFinal === "premium" && dados.premiumAte) {
+      if (new Date() > dados.premiumAte.toDate()) planoFinal = "gratuito";
+    }
+
+    window._planoAtual = planoFinal;
+    aplicarRestricoes(planoFinal);
+    iniciarAdmin(user);
+  }
   if (window._onAuthChange) window._onAuthChange(user);
 });
+</script>
 </script>
 
 <!-- PWA icons -->
@@ -2402,6 +2432,8 @@ function imprimirRelatorioMensalidades() {
   </div>` : ''}
 
   <div class="footer">Controle de Pelada KF · ${nomeMes} ${ano} · Relatório de Mensalidades</div>
+  <script src="freemium-pelada-kf.js"></script>
+  <script src="admin-pelada-kf.js"></script>
   </body></html>`);
   win.document.close();
   win.print();
