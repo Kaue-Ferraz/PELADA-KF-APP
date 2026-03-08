@@ -267,7 +267,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, getDocs, collection }
+import { getFirestore, doc, getDoc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -289,9 +289,7 @@ window._fbAuth    = auth;
 window._fbDb      = db;
 window._fbDoc     = doc;
 window._fbGetDoc  = getDoc;
-window._fbSetDoc    = setDoc;
-window._fbGetDocs   = getDocs;
-window._fbCollection = collection;
+window._fbSetDoc  = setDoc;
 
 // ── Todas as ações de auth ficam DENTRO do módulo ──────────────────────────
 window._doLogin = async function() {
@@ -441,10 +439,6 @@ onAuthStateChanged(auth, user => {
   <div class="tab" onclick="showTab('presenca')"><span class="tab-icon">✅</span>PRESENÇA</div>
   <div class="tab" onclick="showTab('times')"><span class="tab-icon">🎲</span>TIMES</div>
   <div class="tab" onclick="showTab('financeiro')"><span class="tab-icon">💰</span>CAIXA</div>
-  <!-- Adicione após a última .tab -->
-<div class="tab" id="tab-admin" style="display:none" onclick="showTab('admin')">
-  <span class="tab-icon">🛡️</span>ADMIN
-</div>
 </div>
 
 <!-- JOGADORES -->
@@ -974,55 +968,6 @@ onAuthStateChanged(auth, user => {
     </div> <!-- fim vis-mensal -->
 
 </div>
-<!-- FIM page-financeiro -->
-
-<!-- ADMIN -->
-<div class="page" id="page-admin">
-
-  <!-- Card: Editar plano -->
-  <div class="card">
-    <div class="card-title">🛡️ Gerenciar Plano</div>
-    <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
-      Cole o UID do Firebase do usuário (ou clique em um usuário abaixo) e defina o plano.
-    </div>
-    <div style="margin-bottom:10px">
-      <div class="section-label">UID do usuário</div>
-      <input type="text" id="admin-uid-input" placeholder="Cole ou selecione abaixo...">
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div>
-        <div class="section-label">Status do plano</div>
-        <select id="admin-plano-ativo">
-          <option value="true">✅ Ativo</option>
-          <option value="false">❌ Bloqueado</option>
-        </select>
-      </div>
-      <div>
-        <div class="section-label">Válido até</div>
-        <input type="date" id="admin-validade">
-      </div>
-    </div>
-    <button class="btn btn-green" onclick="adminSalvarPlano()">💾 SALVAR PLANO</button>
-    <div id="admin-msg" style="margin-top:10px;font-size:0.8rem;text-align:center;min-height:20px"></div>
-  </div>
-
-  <!-- Card: Lista de usuários -->
-  <div class="card" style="border-color:#1a4a2e">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div class="card-title" style="margin-bottom:0">👥 Usuários Cadastrados</div>
-      <button onclick="adminCarregarUsuarios()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--green);background:transparent;color:var(--green);font-weight:700;font-size:0.75rem;cursor:pointer">
-        🔄 Atualizar
-      </button>
-    </div>
-    <div id="admin-users-list">
-      <div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:20px 0">
-        Clique em Atualizar para carregar os usuários.
-      </div>
-    </div>
-  </div>
-
-</div>
-<!-- FIM page-admin -->
 
 <div class="toast" id="toast"></div>
 
@@ -1162,33 +1107,14 @@ function setSaveIndicator(cls, msg) {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────
 function showTab(name) {
-  // Esconder apenas as páginas principais
-  ['jogadores','presenca','times','financeiro','admin'].forEach(n => {
-    const p = document.getElementById('page-' + n);
-    if (p) p.classList.remove('active');
-  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  const page = document.getElementById('page-' + name);
-  if (page) page.classList.add('active');
-  // Marcar aba ativa pelo onclick
-  document.querySelectorAll('.tab').forEach(t => {
-    const oc = t.getAttribute('onclick') || '';
-    if (oc.includes(name)) t.classList.add('active');
-  });
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = ['jogadores','presenca','times','financeiro'].indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
   if (name === 'presenca') { renderPresence(); initPresencaMes(); }
   if (name === 'times') updateSortInfo();
-  if (name === 'financeiro') {
-    initFinanceiro();
-    // Se financeiro está bloqueado, mostrar overlay
-    if (window._planoAtivo === false) {
-      const b = document.getElementById('fin-bloqueio');
-      if (b) b.style.display = 'flex';
-    }
-  } else {
-    // Esconder overlay ao navegar para outra aba
-    const b = document.getElementById('fin-bloqueio');
-    if (b) b.style.display = 'none';
-  }
+  if (name === 'financeiro') initFinanceiro();
 }
 
 // ─── NIVEL SELECTOR ───────────────────────────────────────────────────────
@@ -3127,204 +3053,6 @@ function imprimirRelatorioPresencas() {
 }
 
 // ─── AUTH STATE HANDLER ───────────────────────────────────────────────────
-// UID do administrador — coloque o seu UID aqui
-const ADMIN_UID = 'JxYNzRilzJUBHbHG0fE6c3Nqd732'; // ex: 'abc123xyz...'
-
-async function verificarPlano(uid) {
-  // Admin sempre tem acesso total
-  window._isAdmin = (uid === ADMIN_UID);
-  const tabAdmin = document.getElementById('tab-admin');
-
-  if (window._isAdmin) {
-    window._planoAtivo = true;
-    if (tabAdmin) tabAdmin.style.display = '';
-    renderTabFinanceiro(true);
-    return;
-  }
-
-  // Esconder aba admin para não-admins
-  if (tabAdmin) tabAdmin.style.display = 'none';
-
-  try {
-    const db = window._fbDb;
-    const docRef = window._fbDoc(db, 'users', uid);
-    const snap = await window._fbGetDoc(docRef);
-
-    if (!snap.exists()) {
-      // Usuário sem documento = sem plano
-      window._planoAtivo = false;
-      renderTabFinanceiro(false);
-      return;
-    }
-
-    const data = snap.data();
-    const ativo = data.planoAtivo === true;
-    const validade = data.validade || '';
-    const hoje = new Date().toISOString().split('T')[0];
-    const dentroValidade = validade >= hoje;
-
-    window._planoAtivo = ativo && dentroValidade;
-    renderTabFinanceiro(window._planoAtivo);
-  } catch(e) {
-    console.error('Erro verificarPlano:', e);
-    // Em caso de erro, bloquear por segurança
-    window._planoAtivo = false;
-    renderTabFinanceiro(false);
-  }
-}
-
-function renderTabFinanceiro(liberado) {
-  const tabFin = document.querySelector('.tab[onclick*="financeiro"]');
-
-  // Remover bloqueio antigo sempre
-  const bloqueioAntigo = document.getElementById('fin-bloqueio');
-  if (bloqueioAntigo) bloqueioAntigo.remove();
-
-  if (liberado) {
-    if (tabFin) { tabFin.style.opacity = '1'; tabFin.style.pointerEvents = ''; }
-  } else {
-    // Overlay fixo que cobre toda a tela quando página financeiro está ativa
-    const div = document.createElement('div');
-    div.id = 'fin-bloqueio';
-    div.style.cssText = [
-      'position:fixed',
-      'inset:0',
-      'background:rgba(10,10,10,0.98)',
-      'z-index:9000',
-      'display:none',
-      'flex-direction:column',
-      'align-items:center',
-      'justify-content:center',
-      'padding:30px',
-      'text-align:center'
-    ].join(';');
-    div.innerHTML = [
-      '<div style="font-size:3rem;margin-bottom:16px">🔒</div>',
-      '<div style="font-family:Bebas Neue,sans-serif;font-size:1.6rem;color:#1db954;letter-spacing:3px;margin-bottom:10px">MÓDULO FINANCEIRO</div>',
-      '<div style="font-size:0.9rem;color:#aaa;margin-bottom:24px;line-height:1.7">Esta funcionalidade requer um plano ativo.<br>Faça um PIX para liberar seu acesso!</div>',
-      '<div style="background:#141414;border:1px solid #1db954;border-radius:12px;padding:16px;margin-bottom:20px;width:100%;max-width:300px">',
-        '<div style="font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Chave PIX</div>',
-        '<div style="font-family:Bebas Neue,sans-serif;font-size:1rem;color:#f4c430;letter-spacing:1px">10305187694</div>',
-        '<button onclick="copiarPix()" style="margin-top:10px;padding:8px 16px;border-radius:8px;border:none;background:#1db954;color:#000;font-weight:700;font-size:0.85rem;cursor:pointer;width:100%">📋 COPIAR CHAVE PIX</button>',
-      '</div>',
-      '<div style="font-size:0.75rem;color:#555;line-height:1.6">Após o pagamento, aguarde a liberação.<br>Dúvidas? Entre em contato: 22 99282-6224 - SOMENTE WHATSAPP.</div>'
-    ].join('');
-    document.body.appendChild(div);
-
-    if (tabFin) { tabFin.style.opacity = '0.5'; tabFin.style.pointerEvents = 'none'; }
-
-    // Interceptar clique na aba financeiro para mostrar bloqueio
-    if (tabFin) {
-      tabFin.style.pointerEvents = '';
-      tabFin.onclick = function() {
-        showTab('financeiro');
-        document.getElementById('fin-bloqueio').style.display = 'flex';
-      };
-    }
-  }
-}
-
-function copiarPix() {
-  const chave = document.getElementById('pix-chave-texto')?.textContent?.trim() || '10305187694';
-  navigator.clipboard.writeText(chave).then(() => {
-    showToast('✅ Chave PIX copiada!');
-  });
-}
-
-// ─── ADMIN: SALVAR PLANO ────────────────────────────────────────────────────
-async function adminSalvarPlano() {
-  const uid      = document.getElementById('admin-uid-input').value.trim();
-  const ativo    = document.getElementById('admin-plano-ativo').value === 'true';
-  const validade = document.getElementById('admin-validade').value.trim();
-  const msgEl    = document.getElementById('admin-msg');
-
-  if (!uid) {
-    msgEl.style.color = 'var(--red)';
-    msgEl.textContent = '⚠️ Informe o UID do usuário.';
-    return;
-  }
-  if (!validade || !/^\d{4}-\d{2}-\d{2}$/.test(validade)) {
-    msgEl.style.color = 'var(--red)';
-    msgEl.textContent = '⚠️ Validade inválida. Use o formato AAAA-MM-DD.';
-    return;
-  }
-
-  msgEl.style.color = 'var(--text-muted)';
-  msgEl.textContent = '⏳ Salvando...';
-
-  try {
-    const db     = window._fbDb;
-    const docRef = window._fbDoc(db, 'users', uid);
-    await window._fbSetDoc(docRef, { planoAtivo: ativo, validade: validade }, { merge: true });
-    msgEl.style.color = 'var(--green)';
-    msgEl.textContent = `✅ Plano ${ativo ? 'ATIVADO' : 'BLOQUEADO'} até ${validade} com sucesso!`;
-    showToast('✅ Plano salvo!');
-  } catch (e) {
-    console.error(e);
-    msgEl.style.color = 'var(--red)';
-    msgEl.textContent = '❌ Erro ao salvar: ' + e.message;
-  }
-}
-
-// ─── ADMIN: CARREGAR LISTA DE USUÁRIOS ──────────────────────────────────────
-async function adminCarregarUsuarios() {
-  const listEl = document.getElementById('admin-users-list');
-  listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px">⏳ Carregando...</div>';
-
-  try {
-    const db   = window._fbDb;
-    const snap = await window._fbGetDocs(window._fbCollection(db, 'users'));
-    const hoje = new Date().toISOString().split('T')[0];
-
-    if (snap.empty) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:16px">Nenhum usuário encontrado.</div>';
-      return;
-    }
-
-    let html = '';
-    snap.forEach(docSnap => {
-      const uid = docSnap.id;
-      const d   = docSnap.data();
-      // Pular sub-coleções de dados (só mostrar docs de nível users/{uid})
-      const ativo = d.planoAtivo === true;
-      const validade = d.validade || '';
-      const dentroVal = validade >= hoje;
-      const liberado = ativo && dentroVal;
-      const cor = liberado ? 'var(--green)' : 'var(--red)';
-      const badge = liberado ? '✅ ATIVO' : '❌ BLOQUEADO';
-      const email = d.email || '—';
-
-      html += `
-        <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid ${liberado ? '#1a4a2e' : '#3a1a1a'};cursor:pointer"
-             onclick="adminSelecionarUsuario('${uid}', ${ativo}, '${validade}')">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-weight:700;font-size:0.85rem;color:var(--text)">${email}</span>
-            <span style="font-size:0.75rem;font-weight:900;color:${cor}">${badge}</span>
-          </div>
-          <div style="font-size:0.65rem;color:var(--text-muted)">Válido até: ${validade || '—'}</div>
-          <div style="font-size:0.6rem;color:#555;margin-top:2px;word-break:break-all">${uid}</div>
-        </div>`;
-    });
-
-    listEl.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:16px">Nenhum usuário com dados.</div>';
-  } catch(e) {
-    console.error(e);
-    listEl.innerHTML = '<div style="color:var(--red);font-size:0.85rem;padding:12px">❌ Erro: ' + e.message + '</div>';
-  }
-}
-
-function adminSelecionarUsuario(uid, ativo, validade) {
-  document.getElementById('admin-uid-input').value = uid;
-  document.getElementById('admin-plano-ativo').value = ativo ? 'true' : 'false';
-  document.getElementById('admin-validade').value = validade || '';
-  document.getElementById('admin-msg').textContent = '👆 Dados carregados. Edite e salve.';
-  document.getElementById('admin-msg').style.color = 'var(--gold)';
-  // Scroll para o topo do card
-  document.getElementById('page-admin').scrollTop = 0;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-
 window._onAuthChange = async function(user) {
   const loginScreen = document.getElementById('login-screen');
   const loading     = document.getElementById('loading');
@@ -3339,20 +3067,9 @@ window._onAuthChange = async function(user) {
     nameBar.style.display = 'block';
     document.getElementById('user-email-label').textContent = user.displayName || user.email;
 
-    try {
-      await loadData();
-      await verificarPlano(user.uid);
-      await loadFinData();
-      await loadPeladaName();
-      // Salvar email do usuário no Firestore para aparecer no painel admin
-      if (user.email) {
-        const uRef = window._fbDoc(window._fbDb, 'users', user.uid);
-        await window._fbSetDoc(uRef, { email: user.email }, { merge: true });
-      }
-    } catch(e) {
-      console.error('Erro ao carregar dados:', e);
-    }
-
+    await loadData();
+    await loadFinData();
+    await loadPeladaName();
     selectNivel(3);
     setPlayerView('ativos');
     const mesRefEl = document.getElementById('input-mes-ref');
@@ -3360,10 +3077,6 @@ window._onAuthChange = async function(user) {
     if (mesRefEl) mesRefEl.value = String(mesSistema()).padStart(2,'0');
     if (anoRefEl) anoRefEl.value = anoSistema();
     renderPlayers();
-
-    // Garantir que começa na aba Jogadores
-    showTab('jogadores');
-
     loading.classList.add('hidden');
   } else {
     _currentUid = null;
