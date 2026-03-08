@@ -3205,9 +3205,8 @@ async function verificarAcessoFinanceiro(user) {
     }
   } catch(e) {
     console.error('Erro verificarAcessoFinanceiro:', e);
-    // Em caso de erro de leitura, não bloquear — dar benefício da dúvida
-    window._planoAtivo = true;
-    _removerBloqueio();
+    window._planoAtivo = false;
+    mostrarTelaPremium();
   }
 }
 
