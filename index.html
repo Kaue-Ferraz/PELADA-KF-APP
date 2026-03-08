@@ -1107,12 +1107,20 @@ function setSaveIndicator(cls, msg) {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────
 function showTab(name) {
+
+  if(name === 'financeiro'){
+    if(!verificarPremium()) return;
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   const idx = ['jogadores','presenca','times','financeiro'].indexOf(name);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   if (name === 'presenca') { renderPresence(); initPresencaMes(); }
+  if (name === 'times') updateSortInfo();
+  if (name === 'financeiro') initFinanceiro();
+}
   if (name === 'times') updateSortInfo();
   if (name === 'financeiro') initFinanceiro();
 }
@@ -2402,7 +2410,50 @@ function imprimirRelatorioMensalidades() {
   </div>` : ''}
 
   <div class="footer">Controle de Pelada KF · ${nomeMes} ${ano} · Relatório de Mensalidades</div>
-  </body></html>`);
+  
+<!-- SISTEMA FREEMIUM -->
+<div id="telaPremium" style="display:none;position:fixed;inset:0;background:#000000f2;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;color:white;">
+<h2 style="color:#1db954;">Área Caixa Premium</h2>
+<p>Para usar o CAIXA é necessário assinatura.</p>
+<p><b>Mensalidade R$ 9,90</b></p>
+<p>Pague via PIX (CPF)</p>
+<p style="color:#1db954;font-size:18px;">10305187694</p>
+<a href="https://wa.me/5522992826224" style="background:#1db954;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px;">Enviar comprovante</a>
+</div>
+
+<button onclick="abrirAdmin()" style="position:fixed;bottom:15px;right:15px;z-index:9998;padding:10px 14px;border-radius:8px;border:none;background:#333;color:white;">
+Admin
+</button>
+
+<script>
+function verificarPremium(){
+let premium=localStorage.getItem("usuarioPremium");
+if(premium!=="true"){
+let tela=document.getElementById("telaPremium");
+if(tela) tela.style.display="flex";
+return false;
+}
+return true;
+}
+
+function abrirAdmin(){
+let senha=prompt("Senha admin");
+if(senha==="1234"){
+let acao=prompt("Digite: 1 ativar / 2 desativar");
+if(acao==="1"){
+localStorage.setItem("usuarioPremium","true");
+alert("Usuário liberado");
+}
+if(acao==="2"){
+localStorage.setItem("usuarioPremium","false");
+alert("Usuário bloqueado");
+}
+}
+}
+</script>
+<!-- FIM FREEMIUM -->
+
+</body></html>`);
   win.document.close();
   win.print();
 }
@@ -2624,7 +2675,50 @@ function imprimirRelatorioMensal() {
   </table>` : ''}
 
   <div class="footer">Controle de Pelada KF · Relatório gerado automaticamente</div>
-  </body></html>`);
+  
+<!-- SISTEMA FREEMIUM -->
+<div id="telaPremium" style="display:none;position:fixed;inset:0;background:#000000f2;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;color:white;">
+<h2 style="color:#1db954;">Área Caixa Premium</h2>
+<p>Para usar o CAIXA é necessário assinatura.</p>
+<p><b>Mensalidade R$ 9,90</b></p>
+<p>Pague via PIX (CPF)</p>
+<p style="color:#1db954;font-size:18px;">10305187694</p>
+<a href="https://wa.me/5522992826224" style="background:#1db954;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px;">Enviar comprovante</a>
+</div>
+
+<button onclick="abrirAdmin()" style="position:fixed;bottom:15px;right:15px;z-index:9998;padding:10px 14px;border-radius:8px;border:none;background:#333;color:white;">
+Admin
+</button>
+
+<script>
+function verificarPremium(){
+let premium=localStorage.getItem("usuarioPremium");
+if(premium!=="true"){
+let tela=document.getElementById("telaPremium");
+if(tela) tela.style.display="flex";
+return false;
+}
+return true;
+}
+
+function abrirAdmin(){
+let senha=prompt("Senha admin");
+if(senha==="1234"){
+let acao=prompt("Digite: 1 ativar / 2 desativar");
+if(acao==="1"){
+localStorage.setItem("usuarioPremium","true");
+alert("Usuário liberado");
+}
+if(acao==="2"){
+localStorage.setItem("usuarioPremium","false");
+alert("Usuário bloqueado");
+}
+}
+}
+</script>
+<!-- FIM FREEMIUM -->
+
+</body></html>`);
   win.document.close();
   win.print();
 }
@@ -2714,7 +2808,50 @@ function imprimirRelatorioAnual() {
   </table>
 
   <div class="footer">Controle de Pelada KF · Relatório Anual ${anoFiltro} · Gerado automaticamente</div>
-  </body></html>`);
+  
+<!-- SISTEMA FREEMIUM -->
+<div id="telaPremium" style="display:none;position:fixed;inset:0;background:#000000f2;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;color:white;">
+<h2 style="color:#1db954;">Área Caixa Premium</h2>
+<p>Para usar o CAIXA é necessário assinatura.</p>
+<p><b>Mensalidade R$ 9,90</b></p>
+<p>Pague via PIX (CPF)</p>
+<p style="color:#1db954;font-size:18px;">10305187694</p>
+<a href="https://wa.me/5522992826224" style="background:#1db954;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px;">Enviar comprovante</a>
+</div>
+
+<button onclick="abrirAdmin()" style="position:fixed;bottom:15px;right:15px;z-index:9998;padding:10px 14px;border-radius:8px;border:none;background:#333;color:white;">
+Admin
+</button>
+
+<script>
+function verificarPremium(){
+let premium=localStorage.getItem("usuarioPremium");
+if(premium!=="true"){
+let tela=document.getElementById("telaPremium");
+if(tela) tela.style.display="flex";
+return false;
+}
+return true;
+}
+
+function abrirAdmin(){
+let senha=prompt("Senha admin");
+if(senha==="1234"){
+let acao=prompt("Digite: 1 ativar / 2 desativar");
+if(acao==="1"){
+localStorage.setItem("usuarioPremium","true");
+alert("Usuário liberado");
+}
+if(acao==="2"){
+localStorage.setItem("usuarioPremium","false");
+alert("Usuário bloqueado");
+}
+}
+}
+</script>
+<!-- FIM FREEMIUM -->
+
+</body></html>`);
   win.document.close();
   win.print();
 }
@@ -3047,7 +3184,50 @@ function imprimirRelatorioPresencas() {
   </table>` : ''}
 
   <div class="footer">Controle de Pelada KF · Relatório de Presenças · ${nomeMes} ${ano}</div>
-  </body></html>`);
+  
+<!-- SISTEMA FREEMIUM -->
+<div id="telaPremium" style="display:none;position:fixed;inset:0;background:#000000f2;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;color:white;">
+<h2 style="color:#1db954;">Área Caixa Premium</h2>
+<p>Para usar o CAIXA é necessário assinatura.</p>
+<p><b>Mensalidade R$ 9,90</b></p>
+<p>Pague via PIX (CPF)</p>
+<p style="color:#1db954;font-size:18px;">10305187694</p>
+<a href="https://wa.me/5522992826224" style="background:#1db954;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px;">Enviar comprovante</a>
+</div>
+
+<button onclick="abrirAdmin()" style="position:fixed;bottom:15px;right:15px;z-index:9998;padding:10px 14px;border-radius:8px;border:none;background:#333;color:white;">
+Admin
+</button>
+
+<script>
+function verificarPremium(){
+let premium=localStorage.getItem("usuarioPremium");
+if(premium!=="true"){
+let tela=document.getElementById("telaPremium");
+if(tela) tela.style.display="flex";
+return false;
+}
+return true;
+}
+
+function abrirAdmin(){
+let senha=prompt("Senha admin");
+if(senha==="1234"){
+let acao=prompt("Digite: 1 ativar / 2 desativar");
+if(acao==="1"){
+localStorage.setItem("usuarioPremium","true");
+alert("Usuário liberado");
+}
+if(acao==="2"){
+localStorage.setItem("usuarioPremium","false");
+alert("Usuário bloqueado");
+}
+}
+}
+</script>
+<!-- FIM FREEMIUM -->
+
+</body></html>`);
   win.document.close();
   win.print();
 }
@@ -3097,21 +3277,19 @@ document.getElementById('jogadoresPorTime')
   .addEventListener('input', updateSortInfo);
 </script>
 
-<!-- FREEMIUM SYSTEM -->
-<div id="telaPremium" style="display:none; position:fixed; inset:0; background:#000000f2; z-index:9999; align-items:center; justify-content:center; flex-direction:column; padding:30px; text-align:center;">
-<h2 style="color:#1db954;">Função Premium</h2>
-<p>Para usar a função <b>CAIXA</b> é necessário assinar.</p>
+<!-- SISTEMA FREEMIUM -->
+<div id="telaPremium" style="display:none;position:fixed;inset:0;background:#000000f2;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;color:white;">
+<h2 style="color:#1db954;">Área Caixa Premium</h2>
+<p>Para usar o CAIXA é necessário assinatura.</p>
 <p><b>Mensalidade R$ 9,90</b></p>
-<p>Pague via PIX CPF:</p>
+<p>Pague via PIX (CPF)</p>
 <p style="color:#1db954;font-size:18px;">10305187694</p>
-<a href="https://wa.me/5522992826224" style="background:#1db954;color:#000;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">Enviar comprovante</a>
+<a href="https://wa.me/5522992826224" style="background:#1db954;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px;">Enviar comprovante</a>
 </div>
 
-<div id="adminPainel" style="display:none; position:fixed; bottom:10px; right:10px; background:#111; padding:15px; border-radius:10px; color:white;">
-<h4>Admin</h4>
-<button onclick="ativarPremium()">Ativar usuário</button><br><br>
-<button onclick="desativarPremium()">Desativar</button>
-</div>
+<button onclick="abrirAdmin()" style="position:fixed;bottom:15px;right:15px;z-index:9998;padding:10px 14px;border-radius:8px;border:none;background:#333;color:white;">
+Admin
+</button>
 
 <script>
 function verificarPremium(){
@@ -3124,29 +3302,22 @@ return false;
 return true;
 }
 
-function ativarPremium(){
+function abrirAdmin(){
 let senha=prompt("Senha admin");
 if(senha==="1234"){
+let acao=prompt("Digite: 1 ativar / 2 desativar");
+if(acao==="1"){
 localStorage.setItem("usuarioPremium","true");
-alert("Usuário ativado");
+alert("Usuário liberado");
 }
-}
-
-function desativarPremium(){
-let senha=prompt("Senha admin");
-if(senha==="1234"){
+if(acao==="2"){
 localStorage.setItem("usuarioPremium","false");
-alert("Usuário desativado");
+alert("Usuário bloqueado");
 }
 }
-
-document.addEventListener("keydown",function(e){
-if(e.ctrlKey && e.key==="A"){
-let p=document.getElementById("adminPainel");
-if(p) p.style.display="block";
 }
-});
 </script>
-<!-- END FREEMIUM SYSTEM -->
+<!-- FIM FREEMIUM -->
+
 </body>
 </html>
