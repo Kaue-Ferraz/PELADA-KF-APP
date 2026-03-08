@@ -1154,11 +1154,15 @@ function setSaveIndicator(cls, msg) {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────
 function showTab(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Só esconde as páginas principais (não sub-páginas internas)
+  ['jogadores','presenca','times','financeiro','admin'].forEach(n => {
+    const p = document.getElementById('page-' + n);
+    if (p) p.classList.remove('active');
+  });
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const page = document.getElementById('page-' + name);
   if (page) page.classList.add('active');
-  // Marcar aba ativa pelo onclick em vez de índice fixo
+  // Marcar aba ativa pelo onclick
   document.querySelectorAll('.tab').forEach(t => {
     if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + name + "'")) {
       t.classList.add('active');
@@ -3293,10 +3297,15 @@ window._onAuthChange = async function(user) {
     nameBar.style.display = 'block';
     document.getElementById('user-email-label').textContent = user.displayName || user.email;
 
-    await loadData();
-    await verificarPlano(user.uid);
-    await loadFinData();
-    await loadPeladaName();
+    try {
+      await loadData();
+      await verificarPlano(user.uid);
+      await loadFinData();
+      await loadPeladaName();
+    } catch(e) {
+      console.error('Erro ao carregar dados:', e);
+    }
+
     selectNivel(3);
     setPlayerView('ativos');
     const mesRefEl = document.getElementById('input-mes-ref');
@@ -3304,6 +3313,10 @@ window._onAuthChange = async function(user) {
     if (mesRefEl) mesRefEl.value = String(mesSistema()).padStart(2,'0');
     if (anoRefEl) anoRefEl.value = anoSistema();
     renderPlayers();
+
+    // Garantir que começa na aba Jogadores
+    showTab('jogadores');
+
     loading.classList.add('hidden');
   } else {
     _currentUid = null;
