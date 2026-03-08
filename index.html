@@ -3235,9 +3235,13 @@ function mostrarTelaPremium() {
         </button>
       </div>
       <div style="border-top:1px solid #eee;padding-top:16px;font-size:0.82rem;color:#555;line-height:2">
-        <div>📱 WhatsApp: <strong>${WHATSAPP}</strong></div>
-        <div>✉️ E-mail: <strong>${ADMIN_EMAIL}</strong></div>
-        <div style="font-size:0.72rem;color:#999;margin-top:8px">Após o pagamento, aguarde a liberação.</div>
+        <div style="font-size:0.78rem;color:#333;margin-bottom:10px">Após o pagamento, envie o comprovante pelo WhatsApp junto com o seu e-mail de cadastro:</div>
+        <a href="https://wa.me/552299282624?text=Ol%C3%A1%2C%20fiz%20o%20Pix%20para%20liberar%20o%20m%C3%B3dulo%20financeiro%20do%20Pelada%20KF.%20Meu%20e-mail%20de%20cadastro%20%C3%A9%3A%20${encodeURIComponent(window._fbAuth?.currentUser?.email || '')}"
+           target="_blank"
+           style="display:block;width:100%;padding:11px;border-radius:10px;background:#25D366;color:#fff;font-weight:900;font-size:0.9rem;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
+          📲 Enviar comprovante pelo WhatsApp
+        </a>
+        <div style="font-size:0.75rem;color:#888">📱 ${WHATSAPP} &nbsp;|&nbsp; ✉️ ${ADMIN_EMAIL}</div>
       </div>
     </div>
   `;
@@ -3386,14 +3390,26 @@ async function adminCarregarUsuarios() {
       const email = d.email || '—';
 
       html += `
-        <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid ${liberado ? '#1a4a2e' : '#3a1a1a'};cursor:pointer"
-             onclick="adminSelecionarUsuario('${uid}', ${liberar}, '${validade}')">
+        <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid ${liberado ? '#1a4a2e' : '#3a1a1a'}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-weight:700;font-size:0.85rem;color:var(--text)">${email}</span>
-            <span style="font-size:0.75rem;font-weight:900;color:${cor}">${badge}</span>
+            <span style="font-weight:700;font-size:0.85rem;color:var(--text);word-break:break-all">${email}</span>
+            <span style="font-size:0.75rem;font-weight:900;color:${cor};white-space:nowrap;margin-left:8px">${badge}</span>
           </div>
-          <div style="font-size:0.65rem;color:var(--text-muted)">Válido até: ${validade || '—'}</div>
-          <div style="font-size:0.6rem;color:#555;margin-top:2px;word-break:break-all">${uid}</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:8px">Válido até: ${validade || '—'}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="adminLiberarRapido('${uid}', '${email}', 1)"
+              style="flex:1;padding:7px 4px;border-radius:8px;border:none;background:#1db954;color:#000;font-weight:900;font-size:0.72rem;cursor:pointer">
+              🔓 +1 mês
+            </button>
+            <button onclick="adminLiberarRapido('${uid}', '${email}', 3)"
+              style="flex:1;padding:7px 4px;border-radius:8px;border:none;background:#1a8a3a;color:#fff;font-weight:900;font-size:0.72rem;cursor:pointer">
+              🔓 +3 meses
+            </button>
+            <button onclick="adminBloquear('${uid}', '${email}')"
+              style="flex:1;padding:7px 4px;border-radius:8px;border:none;background:#3a1a1a;color:#ef4444;font-weight:900;font-size:0.72rem;cursor:pointer">
+              🔒 Bloquear
+            </button>
+          </div>
         </div>`;
     });
 
@@ -3414,6 +3430,63 @@ function adminSelecionarUsuario(uid, liberar, validade) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+async function adminLiberarRapido(uid, email, meses) {
+  const hoje = new Date();
+  hoje.setMonth(hoje.getMonth() + meses);
+  const validade = hoje.toISOString().split('T')[0];
+  try {
+    const db = window._fbDb;
+    await window._fbSetDoc(window._fbDoc(db, 'usuarios', uid), { liberar: true, validade }, { merge: true });
+    showToast(`✅ ${email} liberado até ${validade}`);
+    adminCarregarUsuarios();
+  } catch(e) {
+    showToast('❌ Erro: ' + e.message);
+  }
+}
+
+async function adminBloquear(uid, email) {
+  if (!confirm(`Bloquear acesso de ${email}?`)) return;
+  try {
+    const db = window._fbDb;
+    await window._fbSetDoc(window._fbDoc(db, 'usuarios', uid), { liberar: false, validade: null }, { merge: true });
+    showToast(`🔒 ${email} bloqueado.`);
+    adminCarregarUsuarios();
+  } catch(e) {
+    showToast('❌ Erro: ' + e.message);
+  }
+}
+
+
+// ─── MIGRAR USUÁRIOS ANTIGOS (users/ → usuarios/) ────────────────────────────
+async function migrarUsuariosAntigos() {
+  try {
+    const db = window._fbDb;
+    const snapAntigos = await window._fbGetDocs(window._fbCollection(db, 'users'));
+    if (snapAntigos.empty) return;
+
+    let migrados = 0;
+    for (const docSnap of snapAntigos.docs) {
+      const uid = docSnap.id;
+      const d = docSnap.data();
+      // Só migrar docs que têm email (são docs de usuário, não sub-dados)
+      if (!d.email) continue;
+      const novoRef = window._fbDoc(db, 'usuarios', uid);
+      const novoSnap = await window._fbGetDoc(novoRef);
+      // Só criar se ainda não existe em usuarios/
+      if (!novoSnap.exists()) {
+        await window._fbSetDoc(novoRef, {
+          email: d.email,
+          liberar: d.planoAtivo === true,
+          validade: d.validade || null
+        });
+        migrados++;
+      }
+    }
+    if (migrados > 0) console.log(`✅ ${migrados} usuário(s) migrado(s) para coleção usuarios/`);
+  } catch(e) {
+    console.warn('Migração usuarios:', e);
+  }
+}
 
 window._onAuthChange = async function(user) {
   const loginScreen = document.getElementById('login-screen');
@@ -3439,6 +3512,10 @@ window._onAuthChange = async function(user) {
         const uRef = window._fbDoc(window._fbDb, 'usuarios', user.uid);
         await window._fbSetDoc(uRef, { email: user.email }, { merge: true });
       }
+      // Se for admin, migrar usuários antigos
+      if (window._isAdmin) {
+        migrarUsuariosAntigos();
+      }
     } catch(e) {
       console.error('Erro ao carregar dados:', e);
     }
@@ -3451,8 +3528,13 @@ window._onAuthChange = async function(user) {
     if (anoRefEl) anoRefEl.value = anoSistema();
     renderPlayers();
 
-    // Garantir que começa na aba Jogadores
-    showTab('jogadores');
+    // Abrir aba correta conforme perfil
+    if (window._isAdmin) {
+      showTab('admin');
+      adminCarregarUsuarios(); // já carrega a lista automaticamente
+    } else {
+      showTab('jogadores');
+    }
 
     loading.classList.add('hidden');
   } else {
