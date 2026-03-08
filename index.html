@@ -375,6 +375,7 @@ window._doLogout = async function() {
 }); */
 
 // Registra callback de autenticação
+// Registra callback de autenticação
 onAuthStateChanged(auth, async user => {
   if (user) {
     const planoRef  = doc(db, "usuarios", user.uid);
@@ -397,12 +398,15 @@ onAuthStateChanged(auth, async user => {
     }
 
     window._planoAtual = planoFinal;
-    aplicarRestricoes(planoFinal);
-    iniciarAdmin(user);
+    window._aplicarRestricoes = window._aplicarRestricoes || function(){};
+    window._iniciarAdmin = window._iniciarAdmin || function(){};
+    setTimeout(() => {
+      if (window.aplicarRestricoes) window.aplicarRestricoes(planoFinal);
+      if (window.iniciarAdmin) window.iniciarAdmin(user);
+    }, 300);
   }
   if (window._onAuthChange) window._onAuthChange(user);
 });
-</script>
 </script>
 
 <!-- PWA icons -->
