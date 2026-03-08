@@ -3205,8 +3205,20 @@ function mostrarTelaPremium() {
   div.id = 'fin-bloqueio';
   div.style.cssText = 'position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:9000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow-y:auto';
 
+  // Fechar ao clicar no fundo escuro
+  div.addEventListener('click', function(e) {
+    if (e.target === div) {
+      div.style.display = 'none';
+      showTab('jogadores');
+    }
+  });
+
   div.innerHTML = `
-    <div style="background:#fff;border-radius:20px;padding:32px 24px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+    <div style="position:relative;background:#fff;border-radius:20px;padding:32px 24px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+      <!-- Botão fechar -->
+      <button onclick="document.getElementById('fin-bloqueio').style.display='none'; showTab('jogadores')"
+        style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;line-height:1;padding:4px 8px;border-radius:8px"
+        title="Fechar">✕</button>
       <div style="font-size:3rem;margin-bottom:12px">🔒</div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#111;letter-spacing:2px;margin-bottom:8px">Controle Financeiro Premium</div>
       <div style="font-size:0.88rem;color:#555;margin-bottom:20px;line-height:1.6">
