@@ -3380,19 +3380,16 @@ async function adminSalvarPlano() {
 // ─── ADMIN: CARREGAR LISTA DE USUÁRIOS ──────────────────────────────────────
 async function adminCarregarUsuarios() {
   const listEl = document.getElementById('admin-users-list');
-  if (!listEl) return;
-  listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px">⏳ Carregando...</div>';
+  if (!listEl) { console.warn('[Admin] admin-users-list nao encontrado!'); return; }
+  listEl.textContent = '⏳ Carregando...';
 
   try {
     const db   = window._fbDb;
     const snap = await window._fbGetDocs(window._fbCollection(db, 'users'));
     const hoje = new Date().toISOString().split('T')[0];
 
-    console.log('[Admin] Total docs em users:', snap.size);
-    snap.forEach(d => console.log('[Admin] doc:', d.id, JSON.stringify(d.data())));
-
     if (snap.empty) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:16px">Coleção <b>users</b> está vazia.</div>';
+      listEl.textContent = 'Nenhum usuário encontrado.';
       return;
     }
 
@@ -3433,17 +3430,18 @@ async function adminCarregarUsuarios() {
         </div>`;
     });
 
-    console.log('[Admin] HTML gerado:', html.length, 'chars');
-    listEl.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:16px">Nenhum usuário com dados.</div>';
+    // Usar fragment para evitar problemas de innerHTML com conteúdo complexo
+    listEl.innerHTML = '';
+    if (!html) {
+      listEl.textContent = 'Nenhum usuário com dados.';
+    } else {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      while (tmp.firstChild) listEl.appendChild(tmp.firstChild);
+    }
   } catch(e) {
-    console.error(e);
-    const permissao = e.code === 'permission-denied' || e.message?.includes('permission');
-    listEl.innerHTML = `<div style="color:var(--red);font-size:0.82rem;padding:12px;line-height:1.6">
-      ❌ <b>Erro ao carregar usuários</b><br>
-      ${permissao
-        ? '🔒 Sem permissão. Verifique as <b>Regras do Firestore</b> no Firebase Console e libere leitura da coleção <b>usuarios</b> para usuários autenticados.'
-        : e.message}
-    </div>`;
+    console.error('[Admin] Erro:', e);
+    listEl.textContent = 'Erro: ' + e.message;
   }
 }
 
