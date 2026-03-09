@@ -3433,6 +3433,7 @@ async function adminCarregarUsuarios() {
         </div>`;
     });
 
+    console.log('[Admin] HTML gerado:', html.length, 'chars');
     listEl.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:16px">Nenhum usuário com dados.</div>';
   } catch(e) {
     console.error(e);
