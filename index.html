@@ -379,7 +379,21 @@ window._doLogout = async function() {
 
 // Registra callback de autenticação
 onAuthStateChanged(auth, user => {
-  if (window._onAuthChange) window._onAuthChange(user);
+  if (window._onAuthChange) {
+    window._onAuthChange(user);
+  } else {
+    // Script principal ainda não carregou — aguarda até 3s
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      if (window._onAuthChange) {
+        clearInterval(iv);
+        window._onAuthChange(user);
+      } else if (Date.now() - t0 > 3000) {
+        clearInterval(iv);
+        console.error('[Auth] _onAuthChange não encontrado após 3s');
+      }
+    }, 50);
+  }
 });
 </script>
 
@@ -3381,15 +3395,20 @@ async function adminSalvarPlano() {
 async function adminCarregarUsuarios() {
   const listEl = document.getElementById('admin-users-list');
   if (!listEl) { console.warn('[Admin] admin-users-list nao encontrado!'); return; }
-  listEl.textContent = '⏳ Carregando...';
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ Carregando usuários...</div>';
 
   try {
-    const db   = window._fbDb;
-    const snap = await window._fbGetDocs(window._fbCollection(db, 'users'));
-    const hoje = new Date().toISOString().split('T')[0];
+    const db = window._fbDb;
+    if (!db) throw new Error('Firebase não inicializado (_fbDb ausente)');
+    if (!window._fbGetDocs) throw new Error('_fbGetDocs não disponível');
+    if (!window._fbCollection) throw new Error('_fbCollection não disponível');
+
+    const colRef = window._fbCollection(db, 'users');
+    const snap   = await window._fbGetDocs(colRef);
+    const hoje   = new Date().toISOString().split('T')[0];
 
     if (snap.empty) {
-      listEl.textContent = 'Nenhum usuário encontrado.';
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum usuário encontrado.</div>';
       return;
     }
 
@@ -3397,7 +3416,6 @@ async function adminCarregarUsuarios() {
     snap.forEach(docSnap => {
       const uid = docSnap.id;
       const d   = docSnap.data();
-      // Mostrar TODOS os docs, mesmo sem email/liberar, para debug
       const liberar  = d.liberar === true;
       const validade = d.validade || '';
       const dentroVal = !validade || validade >= hoje;
@@ -3413,6 +3431,7 @@ async function adminCarregarUsuarios() {
             <span style="font-weight:700;font-size:0.85rem;color:var(--text);word-break:break-all">${emailSafe}</span>
             <span style="font-size:0.75rem;font-weight:900;color:${cor};white-space:nowrap;margin-left:8px">${badge}</span>
           </div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:4px">UID: ${uid}</div>
           <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:8px">Válido até: ${validade || 'Permanente'}</div>
           <div style="display:flex;gap:6px">
             <button onclick="adminLiberarRapido('${uid}', this)" data-email="${emailSafe}" data-meses="1"
@@ -3431,18 +3450,17 @@ async function adminCarregarUsuarios() {
         </div>`;
     });
 
-    // Usar fragment para evitar problemas de innerHTML com conteúdo complexo
     listEl.innerHTML = '';
     if (!html) {
-      listEl.textContent = 'Nenhum usuário com dados.';
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum usuário com dados.</div>';
     } else {
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
       while (tmp.firstChild) listEl.appendChild(tmp.firstChild);
     }
   } catch(e) {
-    console.error('[Admin] Erro:', e);
-    listEl.textContent = 'Erro: ' + e.message;
+    console.error('[Admin] Erro ao carregar usuários:', e);
+    listEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red)">❌ Erro: ${e.message}</div>`;
   }
 }
 
@@ -3537,7 +3555,8 @@ window._onAuthChange = async function(user) {
     if (window._isAdmin) {
       _removerBloqueio();
       showTab('admin');
-      adminCarregarUsuarios();
+      // Pequeno delay para garantir que o Firebase está 100% pronto
+      setTimeout(() => adminCarregarUsuarios(), 300);
     } else {
       showTab('jogadores');
     }
