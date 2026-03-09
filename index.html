@@ -3503,6 +3503,11 @@ window._onAuthChange = async function(user) {
     nameBar.style.display = 'block';
     document.getElementById('user-email-label').textContent = user.displayName || user.email;
 
+    // Setar admin IMEDIATAMENTE antes de qualquer chamada Firebase
+    window._isAdmin = (user.email === ADMIN_EMAIL);
+    const tabAdmin = document.getElementById('tab-admin');
+    if (tabAdmin) tabAdmin.style.display = window._isAdmin ? '' : 'none';
+
     try {
       await loadData();
       await verificarAcessoFinanceiro(user);
